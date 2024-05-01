@@ -557,6 +557,20 @@ function Get-User {
         Add-ADGroupMember -Identity $group -Members $user
       }
       Write-Host ''
+    } 'Remove groups' {
+      Write-Host ''
+      Write-Host ('***You may remove multiple groups by separating them with ' `
+          + "a comma (no space).***`n")
+      $groups = (Read-Host 'Groups to remove') -split ','
+      foreach ($group in $groups) {
+        if ($ILLEGAL_GROUPS -contains $group) {
+          Write-Error ("Skipping ""$group"". Modifying this group is " `
+              + 'restricted by Data Security.')
+          continue
+        }
+        Remove-ADGroupMember -Identity $group -Members $user
+      }
+      Write-Host ''
     } 'Search manager' {
       Get-User -Name (($user.Manager) -split ',')[0].Substring(3)
     } 'Send email' {
@@ -712,6 +726,7 @@ function Get-Group {
   )
   if ($ILLEGAL_GROUPS -notcontains $group.Name) {
     $actions += 'Add users'
+    $actions += 'Remove users'
   }
   if ($group.ManagedBy) {
     $actions += 'Search manager'
@@ -791,6 +806,12 @@ function Get-Group {
           + "comma (no space).`n")
       $users = (Read-Host 'Users to add') -split ','
       Add-ADGroupMember -Identity $group.Name -Members $users
+      Write-Host ''
+    } 'Remove users' {
+      Write-Host ('You may remove multiple users by separating them with a ' `
+          + "comma (no space).`n")
+      $users = (Read-Host 'Users to remove') -split ','
+      Remove-ADGroupMember -Identity $group.Name -Members $users
       Write-Host ''
     } 'Search manager' {
       Get-User `
