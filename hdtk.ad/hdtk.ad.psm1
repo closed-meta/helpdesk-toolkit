@@ -499,12 +499,50 @@ function Get-User {
       Write-Host ''
       Get-User -Username $user.SamAccountName
     } 'List groups' {
-      Write-Host ''
-      Get-ADPrincipalGroupMembership -Identity $user.SamAccountName `
-          | ForEach-Object { $_.Name } `
-          | Sort-Object `
-          | Write-Host
-      Write-Host ''
+      $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName `
+          | Get-ADGroup -Properties 'Name', 'Description' | Sort-Object 'Name'
+      $table = New-Object System.Data.DataTable
+      $headers = @('#', 'NAME', 'DESCRIPTION')
+      foreach ($header in $headers) {
+        $quiet = $table.Columns.Add($header)
+      }
+      $i = 1
+      foreach ($group in $groups) {
+        $row = $table.NewRow()
+        foreach ($header in $headers) {
+          switch ($header) {
+            '#' {
+              $row.'#' = $i
+            } 'NAME' {
+              $row.'NAME' = $group.Name
+            } 'DESCRIPTION' {
+              $row.'DESCRIPTION' = $group.Description
+            } default {
+              Write-Error "Unrecognized header provided (""$header"")."
+              return
+            }
+          }
+        }
+        $table.Rows.Add($row)
+        $i += 1
+      }
+      $table | Format-Table -Wrap
+      Write-Host '# ACTIONS #'
+      $selection = Read-Host '[0] Return  [#] Load group by #'
+      if (-not $selection) {
+        Write-Host ''
+        return
+      } else {
+        $selection = [int] ($selection)
+      }
+      if ($selection -eq 0) {
+        Get-User $user.SamAccountName
+      } elseif (($selection -gt 0) -and ($selection -lt $i)) {
+        Get-Group -Name ($table.Rows[$selection - 1]['NAME'])
+      } else {
+        Write-Error "Undefined action. Expected an integer 0-$($selection - 1)"
+        return
+      }
     } 'Add groups' {
       Write-Host ''
       Write-Host ('***You may add multiple groups by separating them with ' `
