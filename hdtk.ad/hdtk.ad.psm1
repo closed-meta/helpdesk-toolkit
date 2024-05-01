@@ -552,7 +552,7 @@ function Get-User {
       $groups = (Read-Host 'Groups to add') -split ','
       foreach ($group in $groups) {
         if ($ILLEGAL_GROUPS -contains $group) {
-          Write-Error ("Skipping `"$group`". Modifying this group is " `
+          Write-Error ("Skipping ""$group"". Modifying this group is " `
               + 'restricted by Data Security.')
           continue
         }
@@ -1050,7 +1050,7 @@ function Remote-Computer {
   Write-Host $Name
 
   Write-Host ''
-  Write-Host "Connecting to `"$Name`"..."
+  Write-Host "Connecting to ""$Name""..."
 
   Start-Process -FilePath 'msra.exe' -ArgumentList "/offerra $Name"
   Write-Host ''
