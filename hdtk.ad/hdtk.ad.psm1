@@ -68,7 +68,7 @@
     expect the object to have a property containing a special character.
       - Special characters: 
         <https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_special_characters>.
-  - Don't escape duoble-quotes with the typical escape character (`"). Escape 
+  - Don't escape double-quotes with the typical escape character (`"). Escape 
     them with another double-quote instead ("").
   - Commenting:
       - Comments may begin with tags within brackets such as: `[BUG]`, 
