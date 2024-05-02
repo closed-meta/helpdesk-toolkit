@@ -11,7 +11,6 @@
   - Use 1TB-style bracing.
       - <https://en.wikipedia.org/wiki/Indentation_style#One_True_Brace>.
       - Resembles K&R style bracing with a few differences:
-          - Never omit braces (even for single-statement blocks).
           - Place opening-braces on the same line, rather than on their
             own line.
           - Use chaining (a practice where something is placed on the same
