@@ -340,6 +340,7 @@ function Get-User {
       $value = $value.Value
     }  # [HACK]
     if ($value -is [datetime]) {
+      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
       if ($value -lt (Get-Date)) {
         $diff = (Get-Date) - $value
         $timeSince = '{0}D : {1}H : {2}M ago' `
@@ -355,20 +356,20 @@ function Get-User {
             $value = ([DateTime]($user.accountExpires)).AddYears(1600).ToLocalTime()
           }
           if ($value -lt (Get-Date)) {
-            Write-Host "$displayName : $value ($timeSince)" `
+            Write-Host "$displayName : $date ($timeSince)" `
                 -ForegroundColor 'red'
           } else {
-            Write-Host "$displayName : $value" -ForegroundColor 'green'
+            Write-Host "$displayName : $date" -ForegroundColor 'green'
           }
         }
       } 'AccountLockoutTime' {
         if ($value) {
-          Write-Host "$displayName : $value ($timeSince)" `
+          Write-Host "$displayName : $date ($timeSince)" `
               -ForegroundColor 'red'
         }
       } 'Created' {
         if ($value) {
-          Write-Host "$displayName : $value ($timeSince)"
+          Write-Host "$displayName : $date ($timeSince)"
         }
       } 'EmployeeID' {
         if ($value) {
@@ -384,11 +385,11 @@ function Get-User {
         }
       } 'LastBadPasswordAttempt' {
         if ($value) {
-          Write-Host "$displayName : $value ($timeSince)"
+          Write-Host "$displayName : $date ($timeSince)"
         }
       } 'LastLogonDate' {
         if ($value) {
-          Write-Host "$displayName : $value ($timeSince)"
+          Write-Host "$displayName : $date ($timeSince)"
         }
       } 'LockedOut' {
         if ($value) {
@@ -404,14 +405,14 @@ function Get-User {
           Write-Host "$displayName : "
         }
       } 'Modified' {
-        Write-Host "$displayName : $value ($timeSince)"
+        Write-Host "$displayName : $date ($timeSince)"
       } 'PasswordLastSet' {
         if ($value) {
           if ($diff.Days -ge 90) {
-            Write-Host "$displayName : $value ($timeSince)" `
+            Write-Host "$displayName : $date ($timeSince)" `
                 -ForegroundColor 'red'
           } else {
-            Write-Host "$displayName : $value ($timeSince)" `
+            Write-Host "$displayName : $date ($timeSince)" `
                 -ForegroundColor 'green'
           }
         } else {
@@ -435,7 +436,11 @@ function Get-User {
           Write-Host "$displayName : $value" -ForegroundColor 'green'
         }
       } default {
-        Write-Host "$displayName : $value"
+        if ($value -is [datetime]) {
+          Write-Host "$displayName : $date"
+        } else {
+          Write-Host "$displayName : $value"
+        }
       }
     }
   }
@@ -745,8 +750,18 @@ function Get-Group {
         [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
       $value = $value.Value
     }  # [HACK]
+    if ($value -is [datetime]) {
+      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+      if ($value -lt (Get-Date)) {
+        $diff = (Get-Date) - $value
+        $timeSince = '{0}D : {1}H : {2}M ago' `
+            -f $diff.Days, $diff.Hours, $diff.Minutes
+      }
+    }
     switch ($canonName) {
-      'info' {
+      'Created' {
+        Write-Host "$displayName : $date ($timeSince)"
+      } 'info' {
         if ($value) {
           Write-Host "$displayName : $value" -ForegroundColor 'red'
         }
@@ -761,8 +776,14 @@ function Get-Group {
         } else {
           Write-Host "$displayName : "
         }
+      } 'Modified' {
+        Write-Host "$displayName : $date ($timeSince)"
       } default {
+        if ($value -is [datetime]) {
+          Write-Host "$displayName : $date"
+        } else {
           Write-Host "$displayName : $value"
+        }
       }
     }
   }
