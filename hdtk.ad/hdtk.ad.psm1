@@ -544,9 +544,9 @@ function Get-User {
         if ($ILLEGAL_GROUPS -contains $group) {
           Write-Error ("Skipping ""$group"". Modifying this group is " `
               + 'restricted by Data Security.')
-          continue
+        } else {
+          Add-ADGroupMember -Identity $group -Members $user
         }
-        Add-ADGroupMember -Identity $group -Members $user
       }
       Write-Host ''
     } 'Remove groups' {
@@ -558,9 +558,9 @@ function Get-User {
         if ($ILLEGAL_GROUPS -contains $group) {
           Write-Error ("Skipping ""$group"". Modifying this group is " `
               + 'restricted by Data Security.')
-          continue
+        } else {
+          Remove-ADGroupMember -Identity $group -Members $user
         }
-        Remove-ADGroupMember -Identity $group -Members $user
       }
       Write-Host ''
     } 'Search manager' {
