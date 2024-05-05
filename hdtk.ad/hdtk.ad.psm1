@@ -713,9 +713,11 @@ function Get-Group {
   <# Prepares the menu here to reduce lag between when the "information"
      section is printed and when the "actions" menu is printed. #>
   $actions = @(
-    'End',
-    'Return to search'
+    'End'
   )
+  if ($domainObjects.Count -ne 1) {
+    $actions += 'Return to search'
+  }
   if ($ILLEGAL_GROUPS -notcontains $group.Name) {
     $actions += 'Add users'
     $actions += 'Remove users'
