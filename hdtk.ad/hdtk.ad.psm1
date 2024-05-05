@@ -305,7 +305,8 @@ function Get-User {
     'Reload',
     'Reset password',
     'List groups',
-    'Add groups'
+    'Add groups',
+    'Remove groups'
   )
   if (($user.LockedOut) -or ($user.AccountLockoutTime)) {
     $actions += 'Unlock Account'
@@ -329,7 +330,6 @@ function Get-User {
   }
 
   # Writes properties for user.
-  $timeSince = '{0}D : {1}H : {2}M ago'
   Write-Host "`n# INFORMATION #"
   foreach ($property in $Properties) {
     $canonName = $property['CanonName']
@@ -339,6 +339,13 @@ function Get-User {
         [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
       $value = $value.Value
     }  # [HACK]
+    if ($value -is [datetime]) {
+      if ($value -lt (Get-Date)) {
+        $diff = (Get-Date) - $value
+        $timeSince = '{0}D : {1}H : {2}M ago' `
+            -f $diff.Days, $diff.Hours, $diff.Minutes
+      }
+    }
     switch ($canonName) {
       'accountExpires' {
         if ($value) {
@@ -347,10 +354,8 @@ function Get-User {
           } else {
             $value = ([DateTime]($user.accountExpires)).AddYears(1600).ToLocalTime()
           }
-          $diff = (Get-Date) - $value
           if ($value -lt (Get-Date)) {
-            Write-Host ("$displayName : $value ($timeSince)" `
-                -f $diff.Days, $diff.Hours, $diff.Minutes) `
+            Write-Host "$displayName : $value ($timeSince)" `
                 -ForegroundColor 'red'
           } else {
             Write-Host "$displayName : $value" -ForegroundColor 'green'
@@ -358,16 +363,12 @@ function Get-User {
         }
       } 'AccountLockoutTime' {
         if ($value) {
-          $diff = (Get-Date) - $value
-          Write-Host ("$displayName : $value ($timeSince)" `
-              -f $diff.Days, $diff.Hours, $diff.Minutes) `
+          Write-Host "$displayName : $value ($timeSince)" `
               -ForegroundColor 'red'
         }
       } 'Created' {
         if ($value) {
-          $diff = (Get-Date) - $value
-          Write-Host ("$displayName : $value ($timeSince)" `
-              -f $diff.Days, $diff.Hours, $diff.Minutes)
+          Write-Host "$displayName : $value ($timeSince)"
         }
       } 'EmployeeID' {
         if ($value) {
@@ -383,15 +384,11 @@ function Get-User {
         }
       } 'LastBadPasswordAttempt' {
         if ($value) {
-          $diff = (Get-Date) - $value
-          Write-Host ("$displayName : $value ($timeSince)" `
-              -f $diff.Days, $diff.Hours, $diff.Minutes)
+          Write-Host "$displayName : $value ($timeSince)"
         }
       } 'LastLogonDate' {
         if ($value) {
-          $diff = (Get-Date) - $value
-          Write-Host ("$displayName : $value ($timeSince)" `
-              -f $diff.Days, $diff.Hours, $diff.Minutes)
+          Write-Host "$displayName : $value ($timeSince)"
         }
       } 'LockedOut' {
         if ($value) {
@@ -407,19 +404,14 @@ function Get-User {
           Write-Host "$displayName : "
         }
       } 'Modified' {
-        $diff = (Get-Date) - $value
-        Write-Host ("$displayName : $value ($timeSince)" `
-            -f $diff.Days, $diff.Hours, $diff.Minutes)
+        Write-Host "$displayName : $value ($timeSince)"
       } 'PasswordLastSet' {
         if ($value) {
-          $diff = (Get-Date) - $value
           if ($diff.Days -ge 90) {
-            Write-Host ("$displayName : $value ($timeSince)" `
-                -f $diff.Days, $diff.Hours, $diff.Minutes) `
+            Write-Host "$displayName : $value ($timeSince)" `
                 -ForegroundColor 'red'
           } else {
-            Write-Host ("$displayName : $value ($timeSince)" `
-                -f $diff.Days, $diff.Hours, $diff.Minutes) `
+            Write-Host "$displayName : $value ($timeSince)" `
                 -ForegroundColor 'green'
           }
         } else {
@@ -464,19 +456,18 @@ function Get-User {
 
   Write-Host ''
   try {
-    $selection = ([int] (Read-Host 'Action')) - 1
-    if ($selection -lt 0) {
-      Write-Error ('Invalid selection. Expected a number 1-' `
-          + $actions.Count + '.')
-      return
-    }
-    $selection = $actions[$selection]
+    $selection = ([int](Read-Host 'Action')) - 1
   } catch {
-    Write-Host ''
     Write-Error ('Invalid selection. Expected a number 1-' `
         + $actions.Count + '.')
     return
   }
+  if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
+    Write-Error ('Invalid selection. Expected a number 1-' `
+        + $actions.Count + '.')
+    return
+  }
+  $selection = $actions[$selection]
 
   # Executes selected action.
   switch ($selection) {
@@ -507,8 +498,9 @@ function Get-User {
       foreach ($header in $headers) {
         $quiet = $table.Columns.Add($header)
       }
-      $i = 1
+      $i = 0
       foreach ($group in $groups) {
+        $i += 1
         $row = $table.NewRow()
         foreach ($header in $headers) {
           switch ($header) {
@@ -525,11 +517,10 @@ function Get-User {
           }
         }
         $table.Rows.Add($row)
-        $i += 1
       }
       $table | Format-Table -Wrap
       Write-Host '# ACTIONS #'
-      $selection = Read-Host '[0] Return  [#] Load group by #'
+      $selection = Read-Host "[0] Return  [1-$i] Load group by #"
       if (-not $selection) {
         Write-Host ''
         return
@@ -538,10 +529,10 @@ function Get-User {
       }
       if ($selection -eq 0) {
         Get-User $user.SamAccountName
-      } elseif (($selection -gt 0) -and ($selection -lt $i)) {
+      } elseif (($selection -gt 0) -and ($selection -le $i)) {
         Get-Group -Name ($table.Rows[$selection - 1]['NAME'])
       } else {
-        Write-Error "Undefined action. Expected an integer 0-$($selection - 1)"
+        Write-Error "Undefined action. Expected an integer 0-$i."
         return
       }
     } 'Add groups' {
@@ -710,10 +701,10 @@ function Get-Group {
   }
 
   $domainObjects = Search-Objects @searchArguments
-   if (-not $domainObjects) {
+  if (-not $domainObjects) {
     Write-Error 'No groups found.'
     return
-   }
+  }
   $group = Select-ObjectFromTable `
       -Objects $domainObjects `
       -Properties $selectProperties
