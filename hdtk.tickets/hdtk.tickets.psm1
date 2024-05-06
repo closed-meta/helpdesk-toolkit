@@ -463,14 +463,14 @@ function Copy-ConnectPrinterTicket {
   param (
     [Alias('pc')]
     [Parameter(
-      HelpMessage=('Enter the name of the computer that you are connecting.'),
+      HelpMessage=('Enter the name of the computer that you are connecting'),
       Mandatory=$true,
       Position=0
     )]
     [string[]] $Computer,
 
     [Parameter(
-      HelpMessage='Enter the path of the printer that you are connecting.',
+      HelpMessage='Enter the path of the printer that you are connecting',
       Mandatory=$true,
       Position=1
     )]
