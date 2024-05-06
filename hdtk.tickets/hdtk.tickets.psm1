@@ -696,6 +696,23 @@ function Copy-MapDriveTicket {
   }
 }
 
+function Copy-OutlookProfileResetTicket {
+  # [TODO] Write manual.
+
+  [Alias('outlookreset')]
+  [CmdletBinding()]
+
+  $date = Get-Date -Format 'yyyy-MM-dd'
+  $body = "Customer was unable to launch Outlook and would receive an " `
+      + "error about their data file being corrupted.`n`nReset their " `
+      + "Outlook profile by going to Control Panel > Mail (Microsoft " `
+      + "Outlook) > Profiles > Show Profiles... > Add... > ""Profile " `
+      + "Name:"":""$date"" > OK > ""OK""/""Apply"". Issue resolved."
+  Set-Clipboard -Value $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
+}
+
 function Copy-VoicemailPinResetTicket {
   <#
     .SYNOPSIS
