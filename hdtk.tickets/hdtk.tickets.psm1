@@ -697,7 +697,23 @@ function Copy-MapDriveTicket {
 }
 
 function Copy-OutlookProfileResetTicket {
-  # [TODO] Write manual.
+  <#
+    .SYNOPSIS
+      Builds and copies the body of a ticket for an Outlook profile reset.
+
+      ALIAS: outlookreset
+
+    .EXAMPLE
+      Copy-OutlookProfileResetTicket
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer was unable to launch Outlook and would receive an error about their data file being corrupted.
+      > 
+      > Reset their Outlook profile by going to Control Panel > Mail (Microsoft Outlook) > Profiles > Show Profiles... > Add... > "Profile Name:"="2024-01-01" > OK > "OK"/"Apply". Issue resolved.
+
+      Writes "Copied..." plus the ticket body to the command-line interface.
+  #>
 
   [Alias('outlookreset')]
   [CmdletBinding()]
@@ -707,7 +723,7 @@ function Copy-OutlookProfileResetTicket {
       + "error about their data file being corrupted.`n`nReset their " `
       + "Outlook profile by going to Control Panel > Mail (Microsoft " `
       + "Outlook) > Profiles > Show Profiles... > Add... > ""Profile " `
-      + "Name:"":""$date"" > OK > ""OK""/""Apply"". Issue resolved."
+      + "Name:""=""$date"" > OK > ""OK""/""Apply"". Issue resolved."
   Set-Clipboard -Value $body
   Write-Host 'Copied...'
   Write-Host $body -ForegroundColor 'green'
