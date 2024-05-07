@@ -47,51 +47,7 @@ the project develops.
   <https://www.oracle.com/java/technologies/cc-java-programming-language.html>.
 - 80-character column limit.
 - 2-space indentation with 4-space indentation for continuation lines.
-- Use 1TB-style bracing.
-    - <https://en.wikipedia.org/wiki/Indentation_style#One_True_Brace>.
-    - Resembles K&R style bracing with a few differences:
-        - Place opening-braces on the same line, rather than on their
-          own line.
-        - Use chaining (a practice where something is placed on the same
-          line as the closing brace, unless it is the first statement in the
-          block) for the following blocks: (1) if-else statements;
-          (2) switch statements; (3) exception handling statements.
-
-          ```
-          if (conditon) {
-            statement
-            statement
-          } elseif (condition) {
-            statement
-            statement
-          } else {
-            statement
-            statement
-          }
-          switch (condition) {
-            case {
-              statement
-              statement
-            } case {
-              statement
-              statement
-            } default {
-              statement
-              statement
-            }
-          }
-          try {
-            statement
-            statement
-          } catch {
-            statement
-            statement
-          } finally {
-            statement
-            statement
-          }
-          ```
-
+- Write in the [1TB style](https://en.wikipedia.org/wiki/Indentation_style#One_True_Brace).
 - Identifier naming conventions:
     - whispercase for modules.
     - PascalCase for classes, methods and properties.
@@ -122,8 +78,7 @@ the project develops.
     - Parameter attributes should be written in alphabetical order.
       Their arguments (if the attribute has any) should also be written
       in alphabetical order.
-    - The parameter type should immediately preceed the parameter name with
-      a space separating the type and the name.
+    - The parameter type should immediately preceed the parameter name.
     - Switch parameters should be included at the end of the block.
 
 # license
