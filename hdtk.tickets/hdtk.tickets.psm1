@@ -62,15 +62,15 @@ function Copy-AccountUnlockTicket {
         'domain'
       )]
     #>
-    [string] $Type,
+    [string]$Type,
 
-    [string] $Phone,
+    [string]$Phone,
 
     [Alias('user')]
-    [string] $Username,
+    [string]$Username,
 
     [Alias('nosubject')]
-    [switch] $DisableSubjectCopy
+    [switch]$DisableSubjectCopy
   )
 
   $body = "unlock account ($Type)"
@@ -174,14 +174,14 @@ function Copy-CallerIdTicket {
       Mandatory=$true,
       Position=0
     )]
-    [string] $Phone,
+    [string]$Phone,
 
-    [string[]] $Location,
+    [string[]]$Location,
 
-    [string[]] $Name,
+    [string[]]$Name,
 
     [Alias('nosubject')]
-    [switch] $DisableSubjectCopy
+    [switch]$DisableSubjectCopy
   )
 
   $body = "phone number: $Phone`n"
@@ -285,17 +285,17 @@ function Copy-ComputerNameTicket {
       Mandatory=$true,
       Position=0
     )]
-    [string] $CurrentName,
+    [string]$CurrentName,
 
     [Alias('id')]
     [Parameter(Position=1)]
-    [string] $AssetId,
+    [string]$AssetId,
 
     [Alias('nosubject')]
-    [switch] $DisableSubjectCopy,
+    [switch]$DisableSubjectCopy,
 
     [Alias('notag')]
-    [switch] $MissingTag
+    [switch]$MissingTag
   )
 
   if ($MissingTag) {
@@ -422,20 +422,20 @@ function Copy-ConnectPrinterTicket {
       Mandatory=$true,
       Position=0
     )]
-    [string[]] $Computer,
+    [string[]]$Computer,
 
     [Parameter(
       HelpMessage='Enter the path of the printer that you are connecting',
       Mandatory=$true,
       Position=1
     )]
-    [string[]] $Printer,
+    [string[]]$Printer,
 
     [Alias('nosubject')]
-    [switch] $DisableSubjectCopy,
+    [switch]$DisableSubjectCopy,
 
     [Alias('nocomment')]
-    [switch] $DisableFulfillmentCopy
+    [switch]$DisableFulfillmentCopy
   )
 
   $computers = '"{0}"' -f ($Computer -join '", "')
@@ -566,22 +566,22 @@ function Copy-MapDriveTicket {
       Mandatory=$true,
       Position=0
     )]
-    [string[]] $Computer,
+    [string[]]$Computer,
 
     [Parameter(
       HelpMessage=('Enter the network path'),
       Mandatory=$true,
       Position=1
     )]
-    [string[]] $Path,
+    [string[]]$Path,
 
     [Alias('nosubject')]
-    [switch] $DisableSubjectCopy,
+    [switch]$DisableSubjectCopy,
 
     [Alias('nocomment')]
-    [switch] $DisableFulfillmentCopy,
+    [switch]$DisableFulfillmentCopy,
 
-    [switch] $Remap
+    [switch]$Remap
   )
 
   $computers = '"{0}"' -f ($Computer -join '", "')
@@ -724,10 +724,10 @@ function Copy-VoicemailPinResetTicket {
       Position=0,
       ValueFromPipeline=$true
     )]
-    [string] $Phone,
+    [string]$Phone,
 
     [Alias('nosubject')]
-    [switch] $DisableSubjectCopy
+    [switch]$DisableSubjectCopy
   )
 
   $body = 'Customer requested a voicemail PIN reset.' `

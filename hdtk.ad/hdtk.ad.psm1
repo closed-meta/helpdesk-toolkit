@@ -127,31 +127,31 @@ function Get-User {
     [Alias('user')]
     [Parameter(Position=0, ValueFromPipeline=$true)]
     [SupportsWildcards()]
-    [string[]] $Username,
+    [string[]]$Username,
 
     [Alias('eid')]
     [SupportsWildcards()]
-    [string[]] $EmployeeId,
+    [string[]]$EmployeeId,
 
     [SupportsWildcards()]
-    [string[]] $Name,
+    [string[]]$Name,
 
     [SupportsWildcards()]
-    [string[]] $Phone,
+    [string[]]$Phone,
 
     [SupportsWildcards()]
-    [string[]] $Email,
+    [string[]]$Email,
 
-    [hashtable[]] $Properties = @(
+    [hashtable[]]$Properties = @(
       @{ Title = 'Name (display)';  CanonName = 'DisplayName' },
       @{ Title = '       (legal)';  CanonName = 'Name' },
       @{ Title = 'Username';        CanonName = 'SamAccountName' },
       @{ Title = 'Employee ID';     CanonName = 'EmployeeID' },
       @{ Title = 'Email';           CanonName = 'EmailAddress' },
-      @{ Title = 'Phone (desk)';    CanonName = 'ipPhone' },
-      @{ Title = '  (personal)';    CanonName = 'otherMobile' },
-      @{ Title = '  (personal)';    CanonName = 'telephoneNumber' },
-      @{ Title = '  (personal)';    CanonName = 'otherHomePhone' },
+      @{ Title = 'Phone (ipPhone)';    CanonName = 'ipPhone' },
+      @{ Title = '  (otherMobile)';    CanonName = 'otherMobile' },
+      @{ Title = '  (teleNumber)';    CanonName = 'telephoneNumber' },
+      @{ Title = '  (otherHome)';    CanonName = 'otherHomePhone' },
       @{ Title = 'Department';      CanonName = 'Department' },
       @{ Title = 'Job title';       CanonName = 'Title' },
       @{ Title = 'Manager';         CanonName = 'Manager' },
@@ -170,9 +170,9 @@ function Get-User {
     ),
 
     [Alias('noactions')]
-    [switch] $DisableActions,
+    [switch]$DisableActions,
 
-    [switch] $Literal
+    [switch]$Literal
   )
 
   $searchFilters = @()
@@ -485,7 +485,7 @@ function Get-User {
         Write-Host ''
         return
       } else {
-        $selection = [int] ($selection)
+        $selection = [int]$selection
       }
       if ($selection -eq 0) {
         Get-User $user.SamAccountName
@@ -586,16 +586,16 @@ function Get-Group {
   param (
     [Parameter(Position=0, ValueFromPipeline=$true)]
     [SupportsWildcards()]
-    [string[]] $Name,
+    [string[]]$Name,
 
     [Alias('desc')]
     [SupportsWildcards()]
-    [string[]] $Description,
+    [string[]]$Description,
 
     [SupportsWildcards()]
-    [string[]] $Email,
+    [string[]]$Email,
 
-    [hashtable[]] $Properties = @(
+    [hashtable[]]$Properties = @(
       @{ Title = 'Name';        CanonName = 'Name' },
       @{ Title = '    ';        CanonName = 'SamAccountName' },
       @{ Title = 'Description'; CanonName = 'Description' },
@@ -607,9 +607,9 @@ function Get-Group {
     ),
 
     [Alias('noactions')]
-    [switch] $DisableActions,
+    [switch]$DisableActions,
 
-    [switch] $Literal
+    [switch]$Literal
   )
 
   if (-not ($Name -or $Description -or $Email)) {
@@ -759,7 +759,7 @@ function Get-Group {
 
   # Requests selection from the user.
   Write-Host ''
-  $selection = $actions[([int] (Read-Host 'Action')) - 1]
+  $selection = $actions[([int](Read-Host 'Action')) - 1]
 
   # Executes selection.
   Write-Host ''
@@ -861,19 +861,19 @@ function Reformat-Names {
 
   param (
     [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-    [string] $List,
+    [string]$List,
 
     [Alias('entrybreak')]
-    [string] $EntryDelimiter = "`n",
+    [string]$EntryDelimiter = "`n",
 
     [Alias('namebreak')]
-    [string] $NameDelimiter = ', ',
+    [string]$NameDelimiter = ', ',
 
     [Alias('loose')]
-    [switch] $LooseSearch,
+    [switch]$LooseSearch,
 
     [Alias('looser')]
-    [switch] $LooserSearch
+    [switch]$LooserSearch
   )
 
   $entries = @()
@@ -969,9 +969,9 @@ function Remote-Computer {
     [Alias('pc')]
     [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
     [SupportsWildcards()]
-    [string] $Name,
+    [string]$Name,
 
-    [switch] $Literal
+    [switch]$Literal
   )
 
   <# The IsWindows automatic variable not yet supported by this version of 
@@ -1059,9 +1059,9 @@ function Reset-Password {
       Position=0,
       ValueFromPipeline=$true
     )]
-    [string] $Users,
+    [string]$Users,
 
-    [switch] $Force
+    [switch]$Force
   )
 
   if (($Users.Count -gt 1) -and (-not $Force)) {
@@ -1131,21 +1131,21 @@ function Search-Objects {
 
   param (
     [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
-    [hashtable[]] $Filters,
+    [hashtable[]]$Filters,
 
     [ValidateRange(1, 100)]
-    [int] $MaxResults = 20,
+    [int]$MaxResults = 20,
 
     [Parameter(Mandatory=$true, Position=1)]
     [ValidateSet('user', 'group', 'computer')]
-    [string] $Type,
+    [string]$Type,
 
     [Parameter(Position=2)]
-    [string[]] $Properties = '*',
+    [string[]]$Properties = '*',
 
-    [string] $SearchBase,
+    [string]$SearchBase,
 
-    [switch] $Literal
+    [switch]$Literal
   )
 
   # Builds filter string.
@@ -1232,11 +1232,11 @@ function Select-ObjectFromTable {
   param (
     [Parameter(Mandatory=$true, Position=0, ValueFromPipeline=$true)]
     [SupportsWildcards()]
-    [object[]] $Objects,
+    [object[]]$Objects,
 
     [Parameter(Mandatory=$true, Position=1)]
     [SupportsWildcards()]
-    [hashtable[]] $Properties
+    [hashtable[]]$Properties
   )
 
   if ($Objects.Count -eq 1) {
