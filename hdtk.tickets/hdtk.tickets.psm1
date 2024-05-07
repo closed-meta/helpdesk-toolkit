@@ -55,13 +55,6 @@ function Copy-AccountUnlockTicket {
       Mandatory=$true,
       Position=0
     )]
-    <# ArgumentCompletions attribute not yet supported by this version of 
-      PowerShell. #>
-    <# 
-      [ArgumentCompletions(
-        'domain'
-      )]
-    #>
     [string]$Type,
 
     [string]$Phone,
@@ -73,8 +66,8 @@ function Copy-AccountUnlockTicket {
     [switch]$DisableSubjectCopy
   )
 
-  $body = "unlock account ($Type)"
-  $subject = "Customer requested that their account ($Type) be unlocked."
+  $body = "Unlocked account ($Type)."
+  $subject = "unlock account ($Type)"
 
   if ($Phone) {
     $body += "`n`nCalled from: $Phone"
@@ -82,11 +75,14 @@ function Copy-AccountUnlockTicket {
 
   switch ($Type) {
     'domain' {
-      $user = Get-ADUser $Username -Properties 'AccountLockoutTime'
-      if ($Username -and $user.LockedOut) {
-        $date = ($user.AccountLockoutTime).ToString("yyyy-MM-dd")
-        $time = ($user.AccountLockoutTime).ToString("HH:mm:ss")
-        $body += "`n`nAccount locked on $date at $time."
+      if ($Username) {
+        $user = Get-ADUser $Username -Properties 'AccountLockoutTime'
+        if ($user.LockedOut) {
+          $date = ($user.AccountLockoutTime).ToString("yyyy-MM-dd")
+          $time = ($user.AccountLockoutTime).ToString("HH:mm:ss")
+          $body += "`n`nAccount locked on $date at $time."
+          Unlock-ADAccount -Identity $user.SamAccountName
+        }
       }
     }
   }
