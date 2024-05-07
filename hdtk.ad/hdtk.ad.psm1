@@ -421,8 +421,13 @@ function Get-User {
   Write-Host ''
 
   Write-Host ''
+  $selection = $null
+  $selection = Read-Host 'Action'
+  if (-not $selection) {
+    return
+  }
   try {
-    $selection = ([int](Read-Host 'Action')) - 1
+    $selection = [int]$selection
   } catch {
     Write-Error ('Invalid selection. Expected a number 1-' `
         + $actions.Count + '.')
@@ -433,7 +438,7 @@ function Get-User {
         + $actions.Count + '.')
     return
   }
-  $selection = $actions[$selection]
+  $selection = $actions[$selection - 1]
 
   # Executes selected action.
   switch ($selection) {
@@ -486,20 +491,25 @@ function Get-User {
       }
       $table | Format-Table -Wrap
       Write-Host '# ACTIONS #'
+      $selection = $null
       $selection = Read-Host "[0] Return  [1-$i] Load group by #"
       if (-not $selection) {
         Write-Host ''
         return
-      } else {
+      }
+      try {
         $selection = [int]$selection
+      } catch {
+        Write-Error "Invalid selection. Expected a number 0-$i."
+        return
       }
       if ($selection -eq 0) {
         Get-User $user.SamAccountName
-      } elseif (($selection -gt 0) -and ($selection -le $i)) {
-        Get-Group -Name ($table.Rows[$selection - 1]['NAME'])
-      } else {
-        Write-Error "Undefined action. Expected an integer 0-$i."
+      } elseif (($selection -lt 0) -or ($selection -gt $i)) {
+        Write-Error "Invalid selection. Expected a number 0-$i."
         return
+      } else {
+        Get-Group -Name ($table.Rows[$selection - 1]['NAME'])
       }
     } 'Add groups' {
       Write-Host ''
@@ -765,7 +775,22 @@ function Get-Group {
 
   # Requests selection from the user.
   Write-Host ''
-  $selection = $actions[([int](Read-Host 'Action')) - 1]
+  $selection = $null
+  $selection = Read-Host 'Action'
+  if (-not $selection) {
+    return
+  }
+  try {
+    $selection = [int]$selection
+  } catch {
+    Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
+    return
+  }
+  if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
+    Write-Error "Invalid selection. Expected a number 1-$($actions.Count)."
+    return
+  }
+  $selection = $actions[$selection - 1]
 
   # Executes selection.
   Write-Host ''
@@ -1276,6 +1301,21 @@ function Select-ObjectFromTable {
 
   # Displays options to user and requests a selection from the results.
   $table | Format-Table | Out-String | Write-Host
-  $selection = [int](Read-Host "Enter index # of your selection (1-$i)")
+  $selection = $null
+  $selection = Read-Host "Enter selection by # (1-$i)"
+  if (-not $selection) {
+    Write-Error "Invalid selection. Expected a number 1-$i."
+    return
+  }
+  try {
+    $selection = [int]$selection
+  } catch {
+    Write-Error "Invalid selection. Expected a number 1-$i."
+    return
+  }
+  if (($selection -lt 1) -or ($selection -gt $i)) {
+    Write-Error "Invalid selection. Expected a number 1-$i."
+    return
+  }
   return $Objects[$selection - 1]
 }
