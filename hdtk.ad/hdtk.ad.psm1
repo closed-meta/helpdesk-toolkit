@@ -308,7 +308,13 @@ function Get-User {
           if (($value -eq 0) -or ($value -gt [DateTime]::MaxValue.Ticks)) {
             continue
           } else {
-            $value = ([DateTime]($user.accountExpires)).AddYears(1600).ToLocalTime()
+            $value = ([DateTime]$value).AddYears(1600).ToLocalTime()
+          }
+          $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+          if ($value -lt (Get-Date)) {
+            $diff = (Get-Date) - $value
+            $timeSince = '{0}D : {1}H : {2}M ago' `
+                -f $diff.Days, $diff.Hours, $diff.Minutes
           }
           if ($value -lt (Get-Date)) {
             Write-Host "$displayName : $date ($timeSince)" `
