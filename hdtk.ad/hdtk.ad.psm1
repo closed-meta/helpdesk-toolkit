@@ -535,7 +535,7 @@ function Get-User {
           Write-Error ("Skipping ""$group"". Modifying this group is " `
               + 'restricted by Data Security.')
         } else {
-          Remove-ADGroupMember -Identity $group -Members $user
+          Remove-ADGroupMember -Identity $group -Members $user -Confirm $false
         }
       }
       Write-Host ''
@@ -812,7 +812,7 @@ function Get-Group {
       Write-Host ('You may remove multiple users by separating them with a ' `
           + "comma (no space).`n")
       $users = (Read-Host 'Users to remove') -split ','
-      Remove-ADGroupMember -Identity $group.Name -Members $users
+      Remove-ADGroupMember -Identity $group.Name -Members $users -Confirm $false
       Write-Host ''
     } 'Search manager' {
       Get-User `
