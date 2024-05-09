@@ -243,12 +243,15 @@ function Get-User {
   }
 
   $domainObjects = Search-Objects @searchArguments
-  if ($domainObjects) {
-    $user = Select-ObjectFromTable `
-        -Objects $domainObjects `
-        -Properties $selectProperties
-  } else {
+  if (-not $domainObjects) {
     Write-Error 'No users found.'
+    return
+  }
+  $user = Select-ObjectFromTable `
+      -Objects $domainObjects `
+      -Properties $selectProperties
+  if (-not $user) {
+    Write-Error 'No selection made.'
     return
   }
 
