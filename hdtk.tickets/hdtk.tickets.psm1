@@ -307,7 +307,7 @@ function Copy-ComputerNameTicket {
     return
   }
 
-  $body = "current name`n: $CurrentName`n`nasset tag`n: $AssetId"
+  $body = "current name`n: ""$CurrentName""`n`nasset tag`n: ""$AssetId"""
   $subject = 'misconfigured computer name'
 
   Set-Clipboard -Value $body

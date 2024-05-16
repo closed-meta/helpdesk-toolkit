@@ -344,9 +344,7 @@ function Get-User {
           Write-Host "$displayName : $value" -ForegroundColor 'red'
         }
       } 'Enabled' {
-        if ($value) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        } else {
+        if (-not $value) {
           Write-Host "$displayName : $value" -ForegroundColor 'red'
         }
       } 'LastBadPasswordAttempt' {
@@ -360,8 +358,6 @@ function Get-User {
       } 'LockedOut' {
         if ($value) {
           Write-Host "$displayName : $value" -ForegroundColor 'red'
-        } else {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
         }
       } 'Manager' {
         if ($value) {
