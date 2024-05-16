@@ -148,10 +148,12 @@ function Get-User {
       @{ Title = 'Username';        CanonName = 'SamAccountName' },
       @{ Title = 'Employee ID';     CanonName = 'EmployeeID' },
       @{ Title = 'Email';           CanonName = 'EmailAddress' },
-      @{ Title = 'Phone (ipPhone)';    CanonName = 'ipPhone' },
-      @{ Title = '  (otherMobile)';    CanonName = 'otherMobile' },
-      @{ Title = '  (teleNumber)';    CanonName = 'telephoneNumber' },
-      @{ Title = '  (otherHome)';    CanonName = 'otherHomePhone' },
+      @{ Title = 'Phone (ipPhone)'; CanonName = 'ipPhone' },
+      @{ Title = '  (otherMobile)'; CanonName = 'otherMobile' },
+      @{ Title = '   (teleNumber)'; CanonName = 'telephoneNumber' },
+      @{ Title = '    (otherHome)'; CanonName = 'otherHomePhone' },
+      @{ Title = '       (mobile)'; CanonName = 'mobile' },
+      @{ Title = '  (MobilePhone)'; CanonName = 'MobilePhone' },
       @{ Title = 'Department';      CanonName = 'Department' },
       @{ Title = 'Job title';       CanonName = 'Title' },
       @{ Title = 'Manager';         CanonName = 'Manager' },
@@ -367,6 +369,14 @@ function Get-User {
           Write-Host "$displayName : $value"
         } else {
           Write-Host "$displayName : "
+        }
+      } 'mobile' {
+        if ("$value".Trim()) {
+          Write-Host "$displayName : $value" -ForegroundColor 'green'
+        }
+      } 'MobilePhone' {
+        if ("$value".Trim()) {
+          Write-Host "$displayName : $value" -ForegroundColor 'green'
         }
       } 'Modified' {
         Write-Host "$displayName : $date ($timeSince)"
