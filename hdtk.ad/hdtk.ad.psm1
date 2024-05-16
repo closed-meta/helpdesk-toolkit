@@ -538,7 +538,7 @@ function Get-User {
           Write-Error ("Skipping ""$group"". Modifying this group is " `
               + 'restricted by Data Security.')
         } else {
-          Remove-ADGroupMember -Identity $group -Members $user -Confirm $false
+          Remove-ADGroupMember -Identity $group -Members $user -Confirm:$false
         }
       }
       Write-Host ''
@@ -687,6 +687,10 @@ function Get-Group {
   $group = Select-ObjectFromTable `
       -Objects $domainObjects `
       -Properties $selectProperties
+  if (-not $group) {
+    Write-Error 'No selection made.'
+    return
+  }
 
   # Prepares the "actions" menu.
   <# Prepares the menu here to reduce lag between when the "information"
@@ -815,7 +819,7 @@ function Get-Group {
       Write-Host ('You may remove multiple users by separating them with a ' `
           + "comma (no space).`n")
       $users = (Read-Host 'Users to remove') -split ','
-      Remove-ADGroupMember -Identity $group.Name -Members $users -Confirm $false
+      Remove-ADGroupMember -Identity $group.Name -Members $users -Confirm:$false
       Write-Host ''
     } 'Search manager' {
       Get-User `
@@ -1048,8 +1052,8 @@ function Remote-Computer {
 
   Set-Clipboard -Value $Name
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $Name
+  Write-Host 'Copied...'
+  Write-Host $Name -ForegroundColor 'green'
 
   Write-Host ''
   Write-Host "Connecting to ""$Name""..."
@@ -1282,8 +1286,9 @@ function Select-ObjectFromTable {
   foreach ($property in $Properties) {
     $quiet = $table.Columns.Add($property['Header'])
   }
-  $i = 1
+  $i = 0
   foreach ($object in $Objects) {
+    $i += 1
     $row = $table.NewRow()
     foreach ($property in $Properties) {
       if ($property['Header'] -eq '#') {
@@ -1298,9 +1303,7 @@ function Select-ObjectFromTable {
       $row.($property['Header']) = "$value"
     }
     $table.Rows.Add($row)
-    $i += 1
   }
-  $i -= 1
 
   # Displays options to user and requests a selection from the results.
   $table | Format-Table | Out-String | Write-Host
