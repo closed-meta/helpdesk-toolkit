@@ -253,6 +253,11 @@ function Copy-ComputerNameTicket {
 
       ALIAS: id
 
+    .PARAMETER CurrentPrefix
+      Represents the correct prefix for the computer name in cases where only the ID's prefix needs to be updated.
+
+      ALIAS: pre
+
     .PARAMETER DisableSubjectCopy
       Signifies that the function should end after copying the ticket body, rather than also copying the ticket subject after waiting for you to press <enter>.
 
@@ -308,6 +313,9 @@ function Copy-ComputerNameTicket {
     [Parameter(Position=1)]
     [string]$AssetId,
 
+    [Alias('pre')]
+    [string]$CorrectPrefix,
+
     [Alias('nosubject')]
     [switch]$DisableSubjectCopy,
 
@@ -328,20 +336,28 @@ function Copy-ComputerNameTicket {
     return
   }
 
-  $body = "current name`n: ""$CurrentName""`n`nasset tag`n: ""$AssetId"""
+  $body = "current name`n: ""$CurrentName"""
+  if ($CorrectPrefix) {
+    $body += " (correct* prefix -- ""$CorrectPrefix"")"
+  }
+  $body += "`n`nasset tag`n: ""$AssetId"""
+  if ($CorrectPrefix) {
+    $date = Get-Date -Format 'yyyy-MM-dd'
+    $body += "`n`n* According to the naming convention standard as of $date."
+  }
   $subject = 'misconfigured computer name'
 
   Set-Clipboard -Value $body
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
     Read-Host 'Press <enter> to copy the ticket subject'
     Set-Clipboard -Value $subject
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
     Write-Host ''
   }
 }
