@@ -63,24 +63,37 @@ function Copy-AccountUnlockTicket {
     [string]$Username,
 
     [Alias('nosubject')]
-    [switch]$DisableSubjectCopy
+    [switch]$DisableSubjectCopy,
+
+    [Alias('nocomment')]
+    [switch]$DisableFulfillmentCopy
   )
 
   $body = "Caller requested that their account ($Type) be unlocked."
   $subject = "unlock account ($Type)"
+  $fulfillment = "Unlocked account ($Type)."
 
   if ($Phone) {
-    $body += "`n`nCalled from: $Phone"
+    if ($body) {
+      $body += "`n`n"
+    }
+    $body += "Called from: $Phone"
   }
 
   switch ($Type) {
     'domain' {
       if ($Username) {
-        $user = Get-ADUser $Username -Properties 'AccountLockoutTime'
-        if ($user.LockedOut) {
-          $date = ($user.AccountLockoutTime).ToString("yyyy-MM-dd")
-          $time = ($user.AccountLockoutTime).ToString("HH:mm:ss")
-          $body += "`n`nAccount locked on $date at $time."
+        $user = Get-ADUser $Username `
+            -Properties 'AccountLockoutTime', 'LockedOut', 'SamAccountName'
+        if ($user.LockedOut -or $user.AccountLockoutTime) {
+          if ($user.AccountLockoutTime) {
+            $date = ($user.AccountLockoutTime).ToString('yyyy-MM-dd')
+            $time = ($user.AccountLockoutTime).ToString('HH:mm:ss')
+            if ($body) {
+              $body += "`n`n"
+            }
+            $body += "Account locked on $date at $time."
+          }
           Unlock-ADAccount -Identity $user.SamAccountName
         }
       }
@@ -98,6 +111,14 @@ function Copy-AccountUnlockTicket {
     Set-Clipboard -Value $subject
     Write-Host 'Copied...'
     Write-Host $subject -ForegroundColor 'green'
+    Write-Host ''
+  }
+
+  if (-not $DisableFulfillmentCopy) {
+    Read-Host 'Press <enter> to copy the ticket fulfillment comment'
+    Set-Clipboard -Value $fulfillment
+    Write-Host 'Copied...'
+    Write-Host $fulfillment -ForegroundColor 'green'
     Write-Host ''
   }
 }
