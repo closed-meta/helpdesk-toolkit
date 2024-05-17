@@ -908,13 +908,13 @@ function Get-Group {
       Write-Host ('You may add multiple users by separating them with a ' `
           + "comma (no space).`n")
       $users = (Read-Host 'Users to add') -split ','
-      Add-ADGroupMember -Identity $group.Name -Members $users
+      Add-ADGroupMember -Identity $group -Members $users
       Write-Host ''
     } 'Remove users' {
       Write-Host ('You may remove multiple users by separating them with a ' `
           + "comma (no space).`n")
       $users = (Read-Host 'Users to remove') -split ','
-      Remove-ADGroupMember -Identity $group.Name -Members $users -Confirm:$false
+      Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
       Write-Host ''
     } 'Search manager' {
       Get-User `
