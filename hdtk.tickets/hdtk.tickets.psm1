@@ -51,7 +51,7 @@ function Copy-AccountUnlockTicket {
 
   param (
     [Parameter(
-      HelpMessage='Enter the platform that this account is on',
+      HelpMessage='Enter the platform that this account is on.',
       Mandatory=$true,
       Position=0
     )]
@@ -66,7 +66,7 @@ function Copy-AccountUnlockTicket {
     [switch]$DisableSubjectCopy
   )
 
-  $body = "Unlocked account ($Type)."
+  $body = "Caller requested that their account ($Type) be unlocked."
   $subject = "unlock account ($Type)"
 
   if ($Phone) {
@@ -89,15 +89,15 @@ function Copy-AccountUnlockTicket {
 
   Set-Clipboard -Value $body
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
     Read-Host 'Press <enter> to copy the ticket subject'
     Set-Clipboard -Value $subject
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
     Write-Host ''
   }
 }
@@ -202,15 +202,15 @@ function Copy-CallerIdTicket {
 
   Set-Clipboard -Value $body
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
     Read-Host 'Press <enter> to copy the ticket subject'
     Set-Clipboard -Value $subject
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
     Write-Host ''
   }
 }
@@ -417,14 +417,14 @@ function Copy-ConnectPrinterTicket {
   param (
     [Alias('pc')]
     [Parameter(
-      HelpMessage=('Enter the name of the computer that you are connecting'),
+      HelpMessage='Enter the name of the computer that you are connecting.',
       Mandatory=$true,
       Position=0
     )]
     [string[]]$Computer,
 
     [Parameter(
-      HelpMessage='Enter the path of the printer that you are connecting',
+      HelpMessage='Enter the path of the printer that you are connecting.',
       Mandatory=$true,
       Position=1
     )]
@@ -468,23 +468,23 @@ function Copy-ConnectPrinterTicket {
 
   Set-Clipboard -Value $body
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
     Read-Host 'Press <enter> to copy the ticket subject'
     Set-Clipboard -Value $subject
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
     Write-Host ''
   }
 
   if (-not $DisableFulfillmentCopy) {
     Read-Host 'Press <enter> to copy the ticket fulfillment comment'
     Set-Clipboard -Value $fulfillment
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $fulfillment
+    Write-Host 'Copied...'
+    Write-Host $fulfillment -ForegroundColor 'green'
     Write-Host ''
   }
 }
@@ -571,14 +571,14 @@ function Copy-MapDriveTicket {
   param (
     [Alias('pc')]
     [Parameter(
-      HelpMessage=('Enter the computer name'),
+      HelpMessage='Enter the computer name.',
       Mandatory=$true,
       Position=0
     )]
     [string[]]$Computer,
 
     [Parameter(
-      HelpMessage=('Enter the network path'),
+      HelpMessage='Enter the network path.',
       Mandatory=$true,
       Position=1
     )]
@@ -645,23 +645,23 @@ function Copy-MapDriveTicket {
 
   Set-Clipboard -Value $body
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
     Read-Host 'Press <enter> to copy the ticket subject'
     Set-Clipboard -Value $subject
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
     Write-Host ''
   }
 
   if (-not $DisableFulfillmentCopy) {
     Read-Host 'Press <enter> to copy the ticket fulfillment comment'
     Set-Clipboard -Value $fulfillment
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $fulfillment
+    Write-Host 'Copied...'
+    Write-Host $fulfillment -ForegroundColor 'green'
     Write-Host ''
   }
 }
@@ -693,10 +693,13 @@ function Copy-OutlookProfileResetTicket {
       + "error about their data file being corrupted.`n`nReset their " `
       + "Outlook profile by going to Control Panel > Mail (Microsoft " `
       + "Outlook) > Profiles > Show Profiles... > Add... > ""Profile " `
-      + "Name:""=""$date"" > OK > ""OK""/""Apply"". Issue resolved."
+      + "Name:""=""$date"" > OK > ""Always use this profile""=""$date"" " `
+      + "> ""OK""/""Apply"". Issue resolved."
   Set-Clipboard -Value $body
+  Write-Host ''
   Write-Host 'Copied...'
   Write-Host $body -ForegroundColor 'green'
+  Write-Host ''
 }
 
 function Copy-VoicemailPinResetTicket {
@@ -751,15 +754,15 @@ function Copy-VoicemailPinResetTicket {
 
   Set-Clipboard -Value $body
   Write-Host ''
-  Write-Host 'Copied...' -ForegroundColor 'green'
-  Write-Host $body
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
     Read-Host 'Press <enter> to copy the ticket subject'
     Set-Clipboard -Value $subject
-    Write-Host 'Copied...' -ForegroundColor 'green'
-    Write-Host $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
     Write-Host ''
   }
 }
