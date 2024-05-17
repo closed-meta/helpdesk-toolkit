@@ -1143,6 +1143,10 @@ function Remote-Computer {
   $computer = Select-ObjectFromTable `
       -Objects $domainObjects `
       -Properties $selectProperties
+  if (-not $computer) {
+    Write-Error 'No selection made.'
+    return
+  }
   $Name = $computer.Name
 
   Set-Clipboard -Value $Name
