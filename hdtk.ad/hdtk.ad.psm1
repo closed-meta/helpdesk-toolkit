@@ -45,6 +45,95 @@
 
 $ILLEGAL_GROUPS = @()
 
+function Copy-UserSummary {
+  <#
+    .SYNOPSIS
+      Builds and copies a short list of properties for one or more users in Active Directory.
+
+      ALIAS: summary
+
+    .PARAMETER Username
+      Represents the username(s) of one or more Active Directory users to be included in the list.
+
+      ALIAS: user
+
+    .PARAMETER Properties
+      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
+
+    .EXAMPLE
+      Copy-UserSummary JD012345
+
+      Displays a list of various properties of the user with the username "JD012345" omitting any properties the user lacks a value for. The text copied to your clipboard and printed may look something like:
+
+      > John Doe
+      > : username -- JD012345
+      > : employee ID -- 12345
+      > : email -- john-doe@example.com
+      > : department -- information technology
+      > : job title -- help desk analyst
+
+      or -- if this user lacked an email address -- it might look like:
+
+      > John Doe
+      > : username -- JD012345
+      > : employee ID -- 12345
+      > : department -- information technology
+      > : job title -- help desk analyst
+  #>
+
+  [Alias('summary')]
+
+  param (
+    [Alias('user')]
+    [Parameter(
+      HelpMessage=('Enter the user''s username.'),
+      Mandatory=$true,
+      Position=0,
+      ValueFromPipeline=$true
+    )]
+    [string[]]$Username,
+
+    [hashtable[]]$Properties = @(
+      @{ Title = 'username';    CanonName = 'SamAccountName' },
+      @{ Title = 'employee ID'; CanonName = 'EmployeeID' },
+      @{ Title = 'email';       CanonName = 'EmailAddress' },
+      @{ Title = 'department';  CanonName = 'Department' },
+      @{ Title = 'job title';   CanonName = 'Title' }
+    )
+  )
+
+  # Retries all relevant users from Active Directory.
+  $users = $Username.ForEach({
+    Get-ADUser `
+        -Identity $_ `
+        -Properties ($Properties.ForEach({ $_['CanonName'] }) + 'DisplayName')
+  })
+
+  $userDelimiter = "`n`n"
+  $propertyDelimiter = "`n: "
+  $summary = ''
+  foreach ($user in $users) {
+    if ($summary) {
+      $summary += $userDelimiter
+    }
+    $summary += $user.displayName
+    foreach ($property in $Properties) {
+      $canonName = $property['CanonName']
+      $displayName = $property['Title']
+      $value = $user.$canonName
+      if ($value) {
+        $summary += $propertyDelimiter + "$displayName -- $value"
+      }
+    }  
+  }
+
+  Set-Clipboard -Value $summary
+  Write-Host ''
+  Write-Host 'Copied...'
+  Write-Host $summary -ForegroundColor 'green'
+  Write-Host ''
+}
+
 function Get-User {
   <#
     .SYNOPSIS
