@@ -689,7 +689,7 @@ function Get-Group {
       Retrieves all groups in Active Directory whose description contains "email-group@example.com" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
 
     .EXAMPLE
-      Get-Group -Description *\\company\department\unit*
+      Get-Group -Description '*\\company\department\unit*'
 
       Retrieves all groups in Active Directory whose description contains "\\company\department\unit" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
   #>

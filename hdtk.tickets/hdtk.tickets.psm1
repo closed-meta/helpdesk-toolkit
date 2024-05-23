@@ -44,7 +44,80 @@
 #>
 
 function Copy-AccountUnlockTicket {
-  # [TODO] Write manual.
+  <#
+    .SYNOPSIS
+      Builds and copies the body, subject and fulfillment comment of a ticket for an account unlock. Also unlocks the account if the account is a domain / Active Directory account.
+
+      ALIAS: unlock
+
+    .PARAMETER Type
+      Represents the platform that this account is for.
+
+    .PARAMETER Phone
+      Represents the phone number that the customer called from to get the acount unlocked.
+
+    .PARAMETER Username
+      Represents the domain username for the account and only applies to domain account unlocks. This username is used to pull the lockout date and time for the ticket body and to unlock the account.
+
+      ALIAS: user
+
+    .PARAMETER DisableSubjectCopy
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
+
+      ALIAS: nosubject
+
+    .PARAMETER DisableFulfillmentCopy
+      Signifies that the function should not offer to copy the ticket fulfillment comment after waiting for you to press <enter>.
+
+      ALIAS: nocomment
+
+    .EXAMPLE
+      Copy-AccountUnlockTicket -Type domain -Phone '+1 012 345 6789' -Username JD012345
+
+      Copies the following ticket body to your clipboard:
+
+      > Caller requested that their account (domain) be unlocked.
+      > 
+      > Called from: +1 012 345 6789
+      > 
+      > Account locked on 2024-01-01 at 00:00:00.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (domain)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (domain).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-AccountUnlockTicket domain -user JD012345
+
+      Copies the following ticket body to your clipboard:
+
+      > Caller requested that their account (domain) be unlocked.
+      > 
+      > Account locked on 2024-01-01 at 00:00:00.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (domain)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (domain).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-AccountUnlockTicket -Type Imprivata -Phone '+1 012 345 6789'
+
+      Copies the following ticket body to your clipboard:
+
+      > Caller requested that their account (Imprivata) be unlocked.
+      > 
+      > Called from: +1 012 345 6789
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (Imprivata)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (Imprivata).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+  #>
 
   [Alias('unlock')]
   [CmdletBinding()]
@@ -140,7 +213,7 @@ function Copy-CallerIdTicket {
       Represents an array of two strings: (1) the first being the current, incorrect name listed in the caller ID; and (2) the second being the correct name for the caller ID.
 
     .PARAMETER DisableSubjectCopy
-      Signifies that the function should end after copying the ticket body, rather than also copying the ticket subject after waiting for you to press <enter>.
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
 
       ALIAS: nosubject
 
@@ -259,7 +332,7 @@ function Copy-ComputerNameTicket {
       ALIAS: pre
 
     .PARAMETER DisableSubjectCopy
-      Signifies that the function should end after copying the ticket body, rather than also copying the ticket subject after waiting for you to press <enter>.
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
 
       ALIAS: nosubject
 
@@ -274,10 +347,10 @@ function Copy-ComputerNameTicket {
       Copies the following ticket body to your clipboard:
 
       > current name
-      > : INCORRECT_NAME
+      > : "INCORRECT_NAME"
       > 
-      > asset ID
-      > : ASSET_ID
+      > asset tag
+      > : "ASSET_ID"
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
 
@@ -289,10 +362,10 @@ function Copy-ComputerNameTicket {
       Copies the following ticket body to your clipboard:
 
       > current name
-      > : INCORRECT_NAME
+      > : "INCORRECT_NAME"
       > 
-      > asset ID
-      > : ASSET_ID
+      > asset tag
+      > : "ASSET_ID"
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
   #>
@@ -395,7 +468,7 @@ function Copy-ConnectPrinterTicket {
 
       Copies the following ticket body to your clipboard:
 
-      > Customer requested to have a computer ("COMPUTER_NAME") connected to a printer ("PRINTER_NAME").
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
 
@@ -408,7 +481,7 @@ function Copy-ConnectPrinterTicket {
 
       Copies the following ticket body to your clipboard:
 
-      > Customer requested to have computers ("COMPUTER_0", "COMPUTER_1") connected to some printers ("PRINTER_0", "PRINTER_1").
+      > Customer requested to have some computers ("COMPUTER_0", "COMPUTER_1") and some printers ("PRINTER_0", "PRINTER_1") connected.
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
 
@@ -421,7 +494,7 @@ function Copy-ConnectPrinterTicket {
 
       Copies the following ticket body to your clipboard:
 
-      > Customer requested to have a computer ("COMPUTER_NAME") connected to a printer ("PRINTER_NAME").
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
 
@@ -432,7 +505,7 @@ function Copy-ConnectPrinterTicket {
 
       Copies the following ticket body to your clipboard:
 
-      > Customer requested to have a computer ("COMPUTER_NAME") connected to a printer ("PRINTER_NAME").
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
 
@@ -443,7 +516,7 @@ function Copy-ConnectPrinterTicket {
 
       Copies the following ticket body to your clipboard:
 
-      > Customer requested to have a computer ("COMPUTER_NAME") connected to a printer ("PRINTER_NAME").
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
 
       Then writes "Copied..." plus the ticket body to the command-line interface.
   #>
@@ -566,7 +639,9 @@ function Copy-MapDriveTicket {
 
       Writes "Copied..." plus the ticket body to the command-line interface.
 
-      Then waits for you to hit <enter> before copying the ticket subject ("map drive ("PATH_1")") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
 
     .EXAMPLE
       Copy-MapDriveTicket COMPUTER_1 PATH_1
@@ -577,7 +652,9 @@ function Copy-MapDriveTicket {
 
       Writes "Copied..." plus the ticket body to the command-line interface.
 
-      Then waits for you to hit <enter> before copying the ticket subject ("map drive ("path_1")") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
 
     .EXAMPLE
       Copy-MapDriveTicket 'COMPUTER_1', 'COMPUTER_2' 'PATH_1', 'PATH_2'
@@ -588,7 +665,9 @@ function Copy-MapDriveTicket {
 
       Writes "Copied..." plus the ticket body to the command-line interface.
 
-      Then waits for you to hit <enter> before copying the ticket subject ("map drives") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the paths ("PATH_1", "PATH_2") to some drives for the computers ("COMPUTER_1", "COMPUTER_2").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
 
     .EXAMPLE
       Copy-MapDriveTicket COMPUTER_1 PATH_1 -DisableSubjectCopy
@@ -599,7 +678,7 @@ function Copy-MapDriveTicket {
 
       Writes "Copied..." plus the ticket body to the command-line interface.
 
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
   #>
 
   [Alias('mapdrive')]
@@ -717,12 +796,14 @@ function Copy-OutlookProfileResetTicket {
 
       > Customer was unable to launch Outlook and would receive an error about their data file being corrupted.
       > 
-      > Reset their Outlook profile by going to Control Panel > Mail (Microsoft Outlook) > Profiles > Show Profiles... > Add... > "Profile Name:"="2024-01-01" > OK > "OK"/"Apply". Issue resolved.
+      > Reset their Outlook profile by going to Control Panel > Mail (Microsoft Outlook) > Profiles > Show Profiles... > Add... > "Profile Name:"="2024-01-01" > OK > "Always use this profile"="2024-01-01" > "OK"/"Apply". Issue resolved.
 
       Writes "Copied..." plus the ticket body to the command-line interface.
   #>
 
   [Alias('outlookreset')]
+      <# [BUG] Referring to this command by the alias doesn't seem to work for
+               some unknown reason. #>
   [CmdletBinding()]
 
   $date = Get-Date -Format 'yyyy-MM-dd'
