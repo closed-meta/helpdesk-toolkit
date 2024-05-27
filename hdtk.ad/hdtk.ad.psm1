@@ -86,7 +86,7 @@ function Copy-UserSummary {
   param (
     [Alias('user')]
     [Parameter(
-      HelpMessage=('Enter the user''s username.'),
+      HelpMessage='Enter the user''s username.',
       Mandatory=$true,
       Position=0,
       ValueFromPipeline=$true
