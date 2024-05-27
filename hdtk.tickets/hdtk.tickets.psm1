@@ -806,6 +806,11 @@ function Copy-OutlookProfileResetTicket {
                some unknown reason. #>
   [CmdletBinding()]
 
+  param (
+    [Alias('nosubject')]
+    [switch]$DisableSubjectCopy
+  )
+
   $date = Get-Date -Format 'yyyy-MM-dd'
   $body = "Customer was unable to launch Outlook and would receive an " `
       + "error about their data file being corrupted.`n`nReset their " `
@@ -813,11 +818,21 @@ function Copy-OutlookProfileResetTicket {
       + "Outlook) > Profiles > Show Profiles... > Add... > ""Profile " `
       + "Name:""=""$date"" > OK > ""Always use this profile""=""$date"" " `
       + "> ""OK""/""Apply"". Issue resolved."
+  $subject = 'Outlook: unable to access data file'
+
   Set-Clipboard -Value $body
   Write-Host ''
   Write-Host 'Copied...'
   Write-Host $body -ForegroundColor 'green'
   Write-Host ''
+
+  if (-not $DisableSubjectCopy) {
+    Read-Host 'Press <enter> to copy the ticket subject'
+    Set-Clipboard -Value $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
+  Write-Host ''
+  }
 }
 
 function Copy-VoicemailPinResetTicket {
