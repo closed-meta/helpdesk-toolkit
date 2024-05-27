@@ -789,8 +789,26 @@ function Copy-OutlookProfileResetTicket {
 
       ALIAS: outlookreset
 
+    .PARAMETER DisableSubjectCopy
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
+
+      ALIAS: nosubject
+
     .EXAMPLE
       Copy-OutlookProfileResetTicket
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer was unable to launch Outlook and would receive an error about their data file being corrupted.
+      > 
+      > Reset their Outlook profile by going to Control Panel > Mail (Microsoft Outlook) > Profiles > Show Profiles... > Add... > "Profile Name:"="2024-01-01" > OK > "Always use this profile"="2024-01-01" > "OK"/"Apply". Issue resolved.
+
+      Writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+    .EXAMPLE
+      Copy-OutlookProfileResetTicket -DisableSubjectCopy
 
       Copies the following ticket body to your clipboard:
 
