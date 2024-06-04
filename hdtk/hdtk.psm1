@@ -45,6 +45,506 @@
 
 $ILLEGAL_GROUPS = @()
 
+function Copy-AccountUnlockTicket {
+  <#
+    .SYNOPSIS
+      Builds and copies the body, subject and fulfillment comment of a ticket for an account unlock. Also unlocks the account if the account is a domain / Active Directory account.
+
+      ALIAS: unlock
+
+    .PARAMETER Type
+      Represents the platform that this account is for.
+
+    .PARAMETER Phone
+      Represents the phone number that the customer called from to get the acount unlocked.
+
+    .PARAMETER Username
+      Represents the domain username for the account and only applies to domain account unlocks. This username is used to pull the lockout date and time for the ticket body and to unlock the account.
+
+      ALIAS: user
+
+    .PARAMETER DisableSubjectCopy
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
+
+      ALIAS: nosubject
+
+    .PARAMETER DisableFulfillmentCopy
+      Signifies that the function should not offer to copy the ticket fulfillment comment after waiting for you to press <enter>.
+
+      ALIAS: nocomment
+
+    .EXAMPLE
+      Copy-AccountUnlockTicket -Type domain -Phone '+1 012 345 6789' -Username JD012345
+
+      Copies the following ticket body to your clipboard:
+
+      > Caller requested that their account (domain) be unlocked.
+      > 
+      > Called from: +1 012 345 6789
+      > 
+      > Account locked on 2024-01-01 at 00:00:00.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (domain)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (domain).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-AccountUnlockTicket domain -user JD012345
+
+      Copies the following ticket body to your clipboard:
+
+      > Caller requested that their account (domain) be unlocked.
+      > 
+      > Account locked on 2024-01-01 at 00:00:00.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (domain)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (domain).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-AccountUnlockTicket -Type Imprivata -Phone '+1 012 345 6789'
+
+      Copies the following ticket body to your clipboard:
+
+      > Caller requested that their account (Imprivata) be unlocked.
+      > 
+      > Called from: +1 012 345 6789
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (Imprivata)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (Imprivata).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+  #>
+
+  [Alias('unlock')]
+  [CmdletBinding()]
+
+  param (
+    [Parameter(
+      HelpMessage='Enter the platform that this account is on.',
+      Mandatory=$true,
+      Position=0
+    )]
+    [string]$Type,
+
+    [string]$Phone,
+
+    [Alias('user')]
+    [string]$Username,
+
+    [Alias('nosubject')]
+    [switch]$DisableSubjectCopy,
+
+    [Alias('nocomment')]
+    [switch]$DisableFulfillmentCopy
+  )
+
+  $body = "Caller requested that their account ($Type) be unlocked."
+  $subject = "unlock account ($Type)"
+  $fulfillment = "Unlocked account ($Type)."
+
+  if ($Phone) {
+    if ($body) {
+      $body += "`n`n"
+    }
+    $body += "Called from: $Phone"
+  }
+
+  switch ($Type) {
+    'domain' {
+      if ($Username) {
+        $user = Get-ADUser $Username `
+            -Properties 'AccountLockoutTime', 'LockedOut', 'SamAccountName'
+        if ($user.LockedOut -or $user.AccountLockoutTime) {
+          if ($user.AccountLockoutTime) {
+            $date = ($user.AccountLockoutTime).ToString('yyyy-MM-dd')
+            $time = ($user.AccountLockoutTime).ToString('HH:mm:ss')
+            if ($body) {
+              $body += "`n`n"
+            }
+            $body += "Account locked on $date at $time."
+          }
+          Unlock-ADAccount -Identity $user.SamAccountName
+        }
+      }
+    }
+  }
+
+  Set-Clipboard -Value $body
+  Write-Host ''
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
+  Write-Host ''
+
+  if (-not $DisableSubjectCopy) {
+    Read-Host 'Press <enter> to copy the ticket subject'
+    Set-Clipboard -Value $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
+    Write-Host ''
+  }
+
+  if (-not $DisableFulfillmentCopy) {
+    Read-Host 'Press <enter> to copy the ticket fulfillment comment'
+    Set-Clipboard -Value $fulfillment
+    Write-Host 'Copied...'
+    Write-Host $fulfillment -ForegroundColor 'green'
+    Write-Host ''
+  }
+}
+
+function Copy-ConnectPrinterTicket {
+  <#
+    .SYNOPSIS
+      Builds and copies the body of a ticket for connecting one or more computers to one or more printers.
+
+      ALIAS: addprinter
+
+    .PARAMETER Computer
+      Represents the name(s) of the computer(s) being connected to the printer(s).
+
+      ALIAS: pc
+
+    .PARAMETER Printer
+      Represents the path(s) of the printer(s) being connected to.
+
+    .PARAMETER DisableSubjectCopy
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
+
+      ALIAS: nosubject
+
+    .PARAMETER DisableFulfillmentCopy
+      Signifies that the function should not offer to copy the ticket fulfillment comment after waiting for you to press <enter>.
+
+      ALIAS: nocomment
+
+    .PARAMETER KeepCase
+      Signifies that the function should not automatically convert the path to the printer and the name of the computer into screamcase / all-caps.
+
+    .EXAMPLE
+      Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-ConnectPrinterTicket 'COMPUTER_0', 'COMPUTER_1' 'PRINTER_0', 'PRINTER_1'
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have some computers ("COMPUTER_0", "COMPUTER_1") and some printers ("PRINTER_0", "PRINTER_1") connected.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME -DisableSubjectCopy
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+
+    .EXAMPLE
+      Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME -DisableFulfillmentCopy
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+    .EXAMPLE
+      Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME -DisableSubjectCopy -DisableFulfillmentCopy
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
+
+      Then writes "Copied..." plus the ticket body to the command-line interface.
+  #>
+
+  [Alias('addprinter')]
+  [CmdletBinding()]
+
+  param (
+    [Alias('pc')]
+    [Parameter(
+      HelpMessage='Enter the name of the computer that you are connecting.',
+      Mandatory=$true,
+      Position=0
+    )]
+    [string[]]$Computer,
+
+    [Parameter(
+      HelpMessage='Enter the path of the printer that you are connecting.',
+      Mandatory=$true,
+      Position=1
+    )]
+    [string[]]$Printer,
+
+    [Alias('nosubject')]
+    [switch]$DisableSubjectCopy,
+
+    [Alias('nocomment')]
+    [switch]$DisableFulfillmentCopy,
+
+    [switch]$KeepCase
+  )
+
+  if (-not $KeepCase) {
+    $Computer = $Computer.ForEach({ $_.ToUpper() })
+    $Printer = $Printer.ForEach({ $_.ToUpper() })
+  }
+
+  $computers = '"{0}"' -f ($Computer -join '", "')
+  $printers = '"{0}"' -f ($Printer -join '", "')
+
+  $body = 'Customer requested to have '
+  $subject = 'connect computer(s) to printer(s)'
+  $fulfillment = 'Connected '
+
+  if ($Computer.Count -gt 1) {
+    $body += "some computers ($computers) and "
+    $fulfillment += "the computers ($computers) to "
+  } else {
+    $body += "a computer ($computers) and "
+    $fulfillment += "the computer ($computers) to "
+  }
+  if ($Printer.Count -gt 1) {
+    $body += "some printers ($printers) connected."
+    $fulfillment += "the printers ($printers)."
+  } else {
+    $body += "a printer ($printers) connected."
+    $fulfillment += "the printer ($printers)."
+  }
+
+  Set-Clipboard -Value $body
+  Write-Host ''
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
+  Write-Host ''
+
+  if (-not $DisableSubjectCopy) {
+    Read-Host 'Press <enter> to copy the ticket subject'
+    Set-Clipboard -Value $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
+    Write-Host ''
+  }
+
+  if (-not $DisableFulfillmentCopy) {
+    Read-Host 'Press <enter> to copy the ticket fulfillment comment'
+    Set-Clipboard -Value $fulfillment
+    Write-Host 'Copied...'
+    Write-Host $fulfillment -ForegroundColor 'green'
+    Write-Host ''
+  }
+}
+
+function Copy-MapDriveTicket {
+  <#
+    .SYNOPSIS
+      Builds and copies the body and subject of a ticket for mapping network drive(s).
+
+      ALIAS: mapdrive
+
+    .PARAMETER Computer
+      Represents the name(s) of the computer(s) having drives mapped.
+
+      ALIAS: pc
+
+    .PARAMETER Path
+      Represents the path(s) of the network fileshare(s) being mapped for the computer(s).
+
+    .PARAMETER DisableSubjectCopy
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
+
+      ALIAS: nosubject
+
+    .PARAMETER DisableFulfillmentCopy
+      Signifies that the function should not offer to copy the ticket fulfillment comment after waiting for you to press <enter>.
+
+      ALIAS: nocomment
+
+    .PARAMETER KeepCase
+      Signifies that the function should not automatically convert the path to the printer and the name of the computer into screamcase / all-caps.
+
+    .PARAMETER Remap
+      Signifies that you are re-mapping a drive that was somehow un-mapped as opposed to mapping the path to a drive for the first time on that computer.
+
+    .EXAMPLE
+      Copy-MapDriveTicket -Computer COMPUTER_1 -Path PATH_1
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a drive ("PATH_1") mapped for a computer ("COMPUTER_1").
+
+      Writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+    .EXAMPLE
+      Copy-MapDriveTicket COMPUTER_1 PATH_1
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a drive ("PATH_1") mapped for a computer ("COMPUTER_1").
+
+      Writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+    .EXAMPLE
+      Copy-MapDriveTicket 'COMPUTER_1', 'COMPUTER_2' 'PATH_1', 'PATH_2'
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have drives ("PATH_1", "PATH_2") mapped for some computers ("COMPUTER_1", "COMPUTER_2").
+
+      Writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the paths ("PATH_1", "PATH_2") to some drives for the computers ("COMPUTER_1", "COMPUTER_2").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+
+    .EXAMPLE
+      Copy-MapDriveTicket COMPUTER_1 PATH_1 -DisableSubjectCopy
+
+      Copies the following ticket body to your clipboard:
+
+      > Customer requested to have a drive ("PATH_1") mapped for a computer ("COMPUTER_1").
+
+      Writes "Copied..." plus the ticket body to the command-line interface.
+
+      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+  #>
+
+  [Alias('mapdrive')]
+  [CmdletBinding()]
+
+  param (
+    [Alias('pc')]
+    [Parameter(
+      HelpMessage='Enter the computer name.',
+      Mandatory=$true,
+      Position=0
+    )]
+    [string[]]$Computer,
+
+    [Parameter(
+      HelpMessage='Enter the network path.',
+      Mandatory=$true,
+      Position=1
+    )]
+    [string[]]$Path,
+
+    [Alias('nosubject')]
+    [switch]$DisableSubjectCopy,
+
+    [Alias('nocomment')]
+    [switch]$DisableFulfillmentCopy,
+
+    [switch]$KeepCase,
+
+    [switch]$Remap
+  )
+
+  if (-not $KeepCase) {
+    $Computer = $Computer.ForEach({ $_.ToUpper() })
+  }
+
+  $computers = '"{0}"' -f ($Computer -join '", "')
+  $paths = '"{0}"' -f ($Path -join '", "')
+
+  $body = ''
+  $subject = ''
+  $fulfillment = ''
+
+  if ($Remap) {
+    $subject = 're-map drive(s)'
+  } else {
+    $subject = 'map drive(s)'
+  }
+
+  if ($Path.Count -gt 1) {
+    $body = "Customer requested to have drives ($paths) "
+    if ($Remap) {
+      $fulfillment = "Re-mapped the paths ($paths) to some drives for the "
+    } else {
+      $fulfillment = "Mapped the paths ($paths) to some drives for the "
+    }
+  } else {
+    $body = "Customer requested to have a drive ($paths) "
+    if ($Remap) {
+      $fulfillment = "Re-mapped the path ($paths) to a drive for the "
+    } else {
+      $fulfillment = "Mapped the path ($paths) to a drive for the "
+    }
+  }
+  if ($Computer.Count -gt 1) {
+    if ($Remap) {
+      $body += "re-mapped for some computers ($computers)."
+    } else {
+      $body += "mapped for some computers ($computers)."
+    }
+    $fulfillment += "computers ($computers)."
+  } else {
+    if ($Remap) {
+      $body += "re-mapped for a computer ($computers)."
+    } else {
+      $body += "mapped for a computer ($computers)."
+    }
+    $fulfillment += "computer ($computers)."
+  }
+
+  Set-Clipboard -Value $body
+  Write-Host ''
+  Write-Host 'Copied...'
+  Write-Host $body -ForegroundColor 'green'
+  Write-Host ''
+
+  if (-not $DisableSubjectCopy) {
+    Read-Host 'Press <enter> to copy the ticket subject'
+    Set-Clipboard -Value $subject
+    Write-Host 'Copied...'
+    Write-Host $subject -ForegroundColor 'green'
+    Write-Host ''
+  }
+
+  if (-not $DisableFulfillmentCopy) {
+    Read-Host 'Press <enter> to copy the ticket fulfillment comment'
+    Set-Clipboard -Value $fulfillment
+    Write-Host 'Copied...'
+    Write-Host $fulfillment -ForegroundColor 'green'
+    Write-Host ''
+  }
+}
+
 function Copy-UserSummary {
   <#
     .SYNOPSIS
