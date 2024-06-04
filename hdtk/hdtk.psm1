@@ -45,6 +45,72 @@
 
 $ILLEGAL_GROUPS = @()
 
+function Access-CopyPastes {
+  $copyPasteDirectory = 'copypastes'
+  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
+  Invoke-Item $copyPastePath
+}
+
+function Insert-Variables {
+  param (
+    [Parameter(
+      Mandatory=$true,
+      Position=0,
+      ValueFromPipeline=$true
+    )]
+    [string]$String
+  )
+
+  $extension = '.txt'
+  $copyPasteDirectory = 'copypastes'
+  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
+  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+    $_.SubString(0, ($_.Length - $extension.Length))
+  })
+  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+        [System.IO.Path]::Combine($copyPastePath, $_)
+      })
+  $contents = $paths.ForEach({
+    (Get-Content $_ -Encoding 'utf8') -join "`n"
+  })
+  $numFiles = $names.Count
+
+  for ($i = 0; $i -lt $numFiles; $i += 1) {
+    $String = $String -replace "`$$($names[$i])", $contents[$i]
+  }
+  return $String
+}
+
+function Set-CopyPastes {
+  $scope = 'Global'
+  $extension = '.txt'
+  $copyPasteDirectory = 'copypastes'
+  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
+  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+    $_.SubString(0, ($_.Length - $extension.Length))
+  })
+  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+        [System.IO.Path]::Combine($copyPastePath, $_)
+      })
+  $contents = $paths.ForEach({
+    (Get-Content $_ -Encoding 'utf8') -join "`n"
+  })
+  $numFiles = $names.Count
+
+  for ($i = 0; $i -lt $numFiles; $i += 1) {
+    New-Variable `
+        -Name $names[$i] `
+        -Value (Insert-Variables $contents[$i]) `
+        -Scope $scope `
+        -Option 'ReadOnly'`
+        -ErrorAction 'SilentlyContinue'
+  }
+}
+
 function Copy-AccountUnlockTicket {
   <#
     .SYNOPSIS
