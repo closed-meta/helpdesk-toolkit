@@ -1427,3 +1427,115 @@ function Select-ObjectFromTable {
   }
   return $Objects[$selection - 1]
 }
+
+function Update-GroupMemberships {
+  <#
+    .SYNOPSIS
+      Allows you to add/remove one or more users to/from one or more groups in Active Directory.
+
+      ALIAS: update
+
+    .PARAMETER GroupNames
+      Represents the name(s) of the groups you would like to add/remove the users to/from.
+
+      ALIAS: groups
+
+    .PARAMETER Usernames
+      Represents the username(s) of the users you would like to add/remove to/from the group(s).
+
+      ALIAS: users
+
+    .PARAMETER Add
+      Signals that the function should add the specified users to the specified groups.
+
+    .PARAMETER Remove
+      Signals that the function should remove the specified users from the specified groups.
+
+    .EXAMPLE
+      Update-GroupMemberships -GroupNames 'GROUP_1', 'GROUP_2' -Usernames 'USER_1', 'USER_2' -Add
+
+      Adds the users with the usernames "USER_1" and "USER_2" to the groups named "GROUP_1" and "GROUP_2".
+
+    .EXAMPLE
+      Update-GroupMemberships -GroupNames 'GROUP_1', 'GROUP_2' -Usernames 'USER_1', 'USER_2' -Remove
+
+      Removes the users with the usernames "USER_1" and "USER_2" from the groups named "GROUP_1" and "GROUP_2".
+
+    .EXAMPLE
+      Update-GroupMemberships -groups 'GROUP_1', 'GROUP_2' -users 'USER_1', 'USER_2' -Add
+
+      Adds the users with the usernames "USER_1" and "USER_2" to the groups named "GROUP_1" and "GROUP_2".
+  #>
+
+  [Alias('update')]
+  [CmdletBinding()]
+
+  param (
+    [Alias('groups')]
+    [Parameter(Position=0)]
+    [string[]]$GroupNames,
+
+    [Alias('users')]
+    [Parameter(Position=1)]
+    [string[]]$Usernames,
+
+    [switch]$Add,
+
+    [switch]$Remove
+  )
+
+  if (-not ($Add -or $Remove)) {
+    Write-Error 'You must specify whether this is to add members or remove ' `
+        + 'members using the Add and Remove switches.'
+    return
+  } elseif ($Add -and $Remove) {
+    Write-Error 'You cannot use the Add and Remove switches simultaneously.'
+    return
+  }
+
+  $groups = $GroupNames.ForEach({
+    if ($ILLEGAL_GROUPS -contains $_) {
+      Write-Error ('Skipping group ("' + $_ + '"). Modifying this group is ' `
+          + 'restricted by Data Security.')
+      continue
+    }
+    $results = Get-ADGroup `
+        -Filter "(SamAccountName -eq ""$_"") -or (Name -eq ""$_"")" `
+        -Properties 'ObjectGUID', 'SamAccountName'
+    if ($results) {
+      if ($results.Count -gt 1) {
+        Write-Error 'Skipping group ("' + $_ `
+            + '"). Multiple groups found with this name.'
+      } else {
+        $results
+      }
+    } else {
+      Write-Error "Skipping group (""$_""). No groups found with this name."
+    }
+  })
+  $users = $Usernames.ForEach({
+    $results = Get-ADUser $_ -Properties 'ObjectGUID', 'SamAccountName'
+    if ($results) {
+      $results
+    } else {
+      Write-Error "Skipping user (""$_""). No users found with this username."
+    }
+  })
+
+  if (-not $groups) {
+    Write-Error 'No groups found.'
+    return
+  }
+  if (-not $users) {
+    Write-Error 'No users found.'
+    return
+  }
+
+  foreach ($group in $groups) {
+    if ($Add) {
+      Add-ADGroupMember -Identity $group.ObjectGUID -Members $users
+    } elseif ($Remove) {
+      Remove-ADGroupMember -Identity $group.ObjectGUID -Members $users
+    }
+  }
+}
