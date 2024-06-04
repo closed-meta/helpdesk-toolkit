@@ -358,7 +358,8 @@ function Get-User {
     'Remove groups'
   )
   if (($user.LockedOut) -or ($user.AccountLockoutTime)) {
-    $actions += 'Unlock Account'
+    $actions += 'Unlock'
+    $actions += 'Unlock (copy ticket)'
   }
   if ($domainObjects.Count -ne 1) {
     $actions += 'Return to search'
@@ -550,9 +551,11 @@ function Get-User {
           -Objects (Search-Objects @searchArguments) `
           -Properties $selectProperties
       Get-User $user.SamAccountName
-    } 'Unlock account' {
+    } 'Unlock' {
       Unlock-ADAccount -Identity $user.SamAccountName
       Get-User -Username $user.SamAccountName
+    } 'Unlock (copy ticket)' {
+      Copy-AccountUnlockTicket -Type 'domain' -Username $user.SamAccountName
     } 'Reset password' {
       Write-Host ''
       Reset-Password -Users $user.SamAccountName
