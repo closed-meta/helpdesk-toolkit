@@ -15,6 +15,7 @@
       - camelCase for variables (aside from properties).
       - Do not use prefixes (such as `s_`, `_`, `I`, et cetera).
       - Avoid abbreviations.
+      - Use the plural form for a parameter identifier if it can accept multiple values, otherwise, use the singular form.
   - Don't use double-quotes for strings unless there's a special character 
     or you need to do variable substitution. Use single-quotes instead.
       - Special characters: 
@@ -271,12 +272,12 @@ function Copy-ConnectPrinterTicket {
 
       ALIAS: addprinter
 
-    .PARAMETER Computer
+    .PARAMETER Computers
       Represents the name(s) of the computer(s) being connected to the printer(s).
 
       ALIAS: pc
 
-    .PARAMETER Printer
+    .PARAMETER Printers
       Represents the path(s) of the printer(s) being connected to.
 
     .PARAMETER DisableSubjectCopy
@@ -356,18 +357,18 @@ function Copy-ConnectPrinterTicket {
   param (
     [Alias('pc')]
     [Parameter(
-      HelpMessage='Enter the name of the computer that you are connecting.',
+      HelpMessage='Enter the name(s) of the computer(s) that you are connecting.',
       Mandatory=$true,
       Position=0
     )]
-    [string[]]$Computer,
+    [string[]]$Computers,
 
     [Parameter(
-      HelpMessage='Enter the path of the printer that you are connecting.',
+      HelpMessage='Enter the path(s) of the printer(s) that you are connecting.',
       Mandatory=$true,
       Position=1
     )]
-    [string[]]$Printer,
+    [string[]]$Printers,
 
     [Alias('nosubject')]
     [switch]$DisableSubjectCopy,
@@ -379,30 +380,30 @@ function Copy-ConnectPrinterTicket {
   )
 
   if (-not $KeepCase) {
-    $Computer = $Computer.ForEach({ $_.ToUpper() })
-    $Printer = $Printer.ForEach({ $_.ToUpper() })
+    $Computers = $Computers.ForEach({ $_.ToUpper() })
+    $Printers = $Printers.ForEach({ $_.ToUpper() })
   }
 
-  $computers = '"{0}"' -f ($Computer -join '", "')
-  $printers = '"{0}"' -f ($Printer -join '", "')
+  $listOfComputers = '"{0}"' -f ($Computers -join '", "')
+  $listOfPrinters = '"{0}"' -f ($Printers -join '", "')
 
   $body = 'Customer requested to have '
   $subject = 'connect computer(s) to printer(s)'
   $fulfillment = 'Connected '
 
-  if ($Computer.Count -gt 1) {
-    $body += "some computers ($computers) and "
-    $fulfillment += "the computers ($computers) to "
+  if ($Computers.Count -gt 1) {
+    $body += "some computers ($listOfComputers) and "
+    $fulfillment += "the computers ($listOfComputers) to "
   } else {
-    $body += "a computer ($computers) and "
-    $fulfillment += "the computer ($computers) to "
+    $body += "a computer ($listOfComputers) and "
+    $fulfillment += "the computer ($listOfComputers) to "
   }
-  if ($Printer.Count -gt 1) {
-    $body += "some printers ($printers) connected."
-    $fulfillment += "the printers ($printers)."
+  if ($Printers.Count -gt 1) {
+    $body += "some printers ($listOfPrinters) connected."
+    $fulfillment += "the printers ($listOfPrinters)."
   } else {
-    $body += "a printer ($printers) connected."
-    $fulfillment += "the printer ($printers)."
+    $body += "a printer ($listOfPrinters) connected."
+    $fulfillment += "the printer ($listOfPrinters)."
   }
 
   Set-Clipboard -Value $body
@@ -435,12 +436,12 @@ function Copy-MapDriveTicket {
 
       ALIAS: mapdrive
 
-    .PARAMETER Computer
+    .PARAMETER Computers
       Represents the name(s) of the computer(s) having drives mapped.
 
       ALIAS: pc
 
-    .PARAMETER Path
+    .PARAMETER Paths
       Represents the path(s) of the network fileshare(s) being mapped for the computer(s).
 
     .PARAMETER DisableSubjectCopy
@@ -516,18 +517,18 @@ function Copy-MapDriveTicket {
   param (
     [Alias('pc')]
     [Parameter(
-      HelpMessage='Enter the computer name.',
+      HelpMessage='Enter the computer name(s).',
       Mandatory=$true,
       Position=0
     )]
-    [string[]]$Computer,
+    [string[]]$Computers,
 
     [Parameter(
-      HelpMessage='Enter the network path.',
+      HelpMessage='Enter the network path(s).',
       Mandatory=$true,
       Position=1
     )]
-    [string[]]$Path,
+    [string[]]$Paths,
 
     [Alias('nosubject')]
     [switch]$DisableSubjectCopy,
@@ -541,11 +542,11 @@ function Copy-MapDriveTicket {
   )
 
   if (-not $KeepCase) {
-    $Computer = $Computer.ForEach({ $_.ToUpper() })
+    $Computers = $Computers.ForEach({ $_.ToUpper() })
   }
 
-  $computers = '"{0}"' -f ($Computer -join '", "')
-  $paths = '"{0}"' -f ($Path -join '", "')
+  $listOfComputers = '"{0}"' -f ($Computers -join '", "')
+  $listOfPaths = '"{0}"' -f ($Paths -join '", "')
 
   $body = ''
   $subject = ''
@@ -557,35 +558,35 @@ function Copy-MapDriveTicket {
     $subject = 'map drive(s)'
   }
 
-  if ($Path.Count -gt 1) {
-    $body = "Customer requested to have drives ($paths) "
+  if ($Paths.Count -gt 1) {
+    $body = "Customer requested to have drives ($listOfPaths) "
     if ($Remap) {
-      $fulfillment = "Re-mapped the paths ($paths) to some drives for the "
+      $fulfillment = "Re-mapped the paths ($listOfPaths) to some drives for the "
     } else {
-      $fulfillment = "Mapped the paths ($paths) to some drives for the "
+      $fulfillment = "Mapped the paths ($listOfPaths) to some drives for the "
     }
   } else {
-    $body = "Customer requested to have a drive ($paths) "
+    $body = "Customer requested to have a drive ($listOfPaths) "
     if ($Remap) {
-      $fulfillment = "Re-mapped the path ($paths) to a drive for the "
+      $fulfillment = "Re-mapped the path ($listOfPaths) to a drive for the "
     } else {
-      $fulfillment = "Mapped the path ($paths) to a drive for the "
+      $fulfillment = "Mapped the path ($listOfPaths) to a drive for the "
     }
   }
-  if ($Computer.Count -gt 1) {
+  if ($Computers.Count -gt 1) {
     if ($Remap) {
-      $body += "re-mapped for some computers ($computers)."
+      $body += "re-mapped for some computers ($listOfComputers)."
     } else {
-      $body += "mapped for some computers ($computers)."
+      $body += "mapped for some computers ($listOfComputers)."
     }
-    $fulfillment += "computers ($computers)."
+    $fulfillment += "computers ($listOfComputers)."
   } else {
     if ($Remap) {
-      $body += "re-mapped for a computer ($computers)."
+      $body += "re-mapped for a computer ($listOfComputers)."
     } else {
-      $body += "mapped for a computer ($computers)."
+      $body += "mapped for a computer ($listOfComputers)."
     }
-    $fulfillment += "computer ($computers)."
+    $fulfillment += "computer ($listOfComputers)."
   }
 
   Set-Clipboard -Value $body
@@ -618,10 +619,10 @@ function Copy-UserSummary {
 
       ALIAS: summary
 
-    .PARAMETER Username
+    .PARAMETER Usernames
       Represents the username(s) of one or more Active Directory users to be included in the list.
 
-      ALIAS: user
+      ALIAS: users
 
     .PARAMETER Properties
       Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
@@ -650,14 +651,14 @@ function Copy-UserSummary {
   [Alias('summary')]
 
   param (
-    [Alias('user')]
+    [Alias('users')]
     [Parameter(
-      HelpMessage='Enter the user''s username.',
+      HelpMessage=('Enter the username(s) of the user(s).'),
       Mandatory=$true,
       Position=0,
       ValueFromPipeline=$true
     )]
-    [string[]]$Username,
+    [string[]]$Usernames,
 
     [hashtable[]]$Properties = @(
       @{ Title = 'username';    CanonName = 'SamAccountName' },
@@ -669,7 +670,7 @@ function Copy-UserSummary {
   )
 
   # Retries all relevant users from Active Directory.
-  $users = $Username.ForEach({
+  $users = $Usernames.ForEach({
     Get-ADUser `
         -Identity $_ `
         -Properties ($Properties.ForEach({ $_['CanonName'] }) + 'DisplayName')
@@ -709,23 +710,23 @@ function Get-User {
 
       ALIAS: guser
 
-    .PARAMETER Username
+    .PARAMETER Usernames
       Represents the username(s) to search Active Directory users for. If used, at least one of the arguments passed must match a user's username for the user to be considered a match.
 
       ALIAS: user
 
-    .PARAMETER EmployeeId
+    .PARAMETER EmployeeIDs
       Represents the employee ID(s) to search Active Directory users for. If used, at least one of the arguments passed must match a user's employee ID for the user to be considered a match.
 
       ALIAS: eid
 
-    .PARAMETER Name
+    .PARAMETER Names
       Represents the name(s) to search Active Directory users for. If used, at least one of the arguments passed must match a user's name for the user to be considered a match.
 
-    .PARAMETER Phone
+    .PARAMETER Phones
       Represents the phone number(s) to search Active Directory users for. If used, at least one of the arguments passed must match a user's phone number for the user to be considered a match.
 
-    .PARAMETER Email
+    .PARAMETER Emails
       Represents the email address(es) to search Active Directory users for. If used, at least one of the arguments passed must match a user's email address for the user to be considered a match.
 
     .PARAMETER Properties
@@ -750,27 +751,27 @@ function Get-User {
       Displays a list of properties associated with the user with the username "RL097898".
 
     .EXAMPLE
-      Get-User -EmployeeId 12*45
+      Get-User -EmployeeIDs 12*45
 
       Retrieves all users in Active Directory whose employee ID matches the wildcard pattern "12*45" (such as those under the employee ID "12345", "12445", et cetera) and displays a list of properties assosicated with the retrieved user you select from the table of matches.
 
     .EXAMPLE
-      Get-User -Name 'j* doe'
+      Get-User -Names 'j* doe'
 
       Retrieves all users in Active Directory whose name matches the wildcard pattern "j* doe" (such as those with the employee ID "12345", "12445", et cetera) and displays a list of properties assosicated with the retrieved user you select from the table of matches.
 
     .EXAMPLE
-      Get-User -Phone *123*456*7890*
+      Get-User -Phones *123*456*7890*
 
       Retrieves all users in Active Directory whose phone number (either personal or work phone numbers) matches the wildcard pattern "*123*456*7890*" (such as those with the phone number "+1 123 456 7890", "+11234567890", "123/456-7890", "123-456-7890", et cetera) and displays a list of properties assosicated with the retrieved user you select from the table of matches.
 
     .EXAMPLE
-      Get-User -Email 'john-doe@example.com'
+      Get-User -Emails 'john-doe@example.com'
 
       Retrieves all users in Active Directory whose email address (either personal or work email addresses) matches the wildcard pattern "john-doe@example.com" and displays a list of properties assosicated with the retrieved user you select from the table of matches.
 
     .EXAMPLE
-      Get-User -Name 'Jo*n Doe' -Phone +1*123*456*, +1*123*789* -Email *example.com
+      Get-User -Names 'Jo*n Doe' -Phones +1*123*456*, +1*123*789* -Emails *example.com
 
       Retrieves all users in Active Directory whose name matches the wildcard pattern "Jo*n Doe" **and** whose phone number(s) match either "+1*123*456*" or "+1*123*789*" **and** whose email address matches "*example.com". Then displays a list of properties assosicated with the retrieved user you select from the table of matches.
   #>
@@ -782,20 +783,20 @@ function Get-User {
     [Alias('user')]
     [Parameter(Position=0, ValueFromPipeline=$true)]
     [SupportsWildcards()]
-    [string[]]$Username,
+    [string[]]$Usernames,
 
     [Alias('eid')]
     [SupportsWildcards()]
-    [string[]]$EmployeeId,
+    [string[]]$EmployeeIDs,
 
     [SupportsWildcards()]
-    [string[]]$Name,
+    [string[]]$Names,
 
     [SupportsWildcards()]
-    [string[]]$Phone,
+    [string[]]$Phones,
 
     [SupportsWildcards()]
-    [string[]]$Email,
+    [string[]]$Emails,
 
     [hashtable[]]$Properties = @(
       @{ Title = 'Name (display)';  CanonName = 'DisplayName' },
@@ -845,15 +846,15 @@ function Get-User {
     }
   )
 
-  if ($Username) {
+  if ($Usernames) {
     $searchFilters += @{
-      Arguments = $Username
+      Arguments = $Usernames
       Properties = @('SamAccountName')
     }
   }
-  if ($EmployeeId) {
+  if ($EmployeeIDs) {
     $searchFilters += @{
-      Arguments = $EmployeeId
+      Arguments = $EmployeeIDs
       Properties = @('EmployeeID')
     }
     $selectProperties += @{
@@ -861,15 +862,15 @@ function Get-User {
       CanonName = 'EmployeeID'
     }
   }
-  if ($Name) {
+  if ($Names) {
     $searchFilters += @{
-      Arguments = $Name
+      Arguments = $Names
       Properties = @('Name', 'DisplayName')
     }
   }
-  if ($Phone) {
+  if ($Phones) {
     $searchFilters += @{
-      Arguments = $Phone
+      Arguments = $Phones
       Properties = @('ipPhone', 'otherMobile', 'telephoneNumber', 'otherHomePhone')
     }
     $selectProperties += @{
@@ -881,9 +882,9 @@ function Get-User {
       CanonName = 'otherMobile'
     }
   }
-  if ($Email) {
+  if ($Emails) {
     $searchFilters += @{
-      Arguments = $Email
+      Arguments = $Emails
       Properties = @('EmailAddress')
     }
     $selectProperties += @{
@@ -1111,7 +1112,7 @@ function Get-User {
       Write-Host ''
       return
     } 'Reload' {
-      Get-User -Username $user.SamAccountName
+      Get-User -Usernames $user.SamAccountName
     } 'Return to search' {
       $user = Select-ObjectFromTable `
           -Objects (Search-Objects @searchArguments) `
@@ -1119,7 +1120,7 @@ function Get-User {
       Get-User $user.SamAccountName
     } 'Unlock' {
       Unlock-ADAccount -Identity $user.SamAccountName
-      Get-User -Username $user.SamAccountName
+      Get-User -Usernames $user.SamAccountName
     } 'Unlock (copy ticket)' {
       Copy-AccountUnlockTicket -Type 'domain' -Username $user.SamAccountName
     } 'Reset password' {
@@ -1127,7 +1128,7 @@ function Get-User {
       Reset-Password -Users $user.SamAccountName
       Unlock-ADAccount -Identity $user.SamAccountName
       Write-Host ''
-      Get-User -Username $user.SamAccountName
+      Get-User -Usernames $user.SamAccountName
     } 'List groups' {
       $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName `
           | Get-ADGroup -Properties 'Name', 'Description' | Sort-Object 'Name'
@@ -1176,7 +1177,7 @@ function Get-User {
         Write-Error "Invalid selection. Expected a number 0-$i."
         return
       } else {
-        Get-Group -Name ($table.Rows[$selection - 1]['NAME'])
+        Get-Group -Names ($table.Rows[$selection - 1]['NAME'])
       }
     } 'Add groups' {
       Write-Host ''
@@ -1207,7 +1208,7 @@ function Get-User {
       }
       Write-Host ''
     } 'Search manager' {
-      Get-User -Name (($user.Manager) -split ',')[0].Substring(3)
+      Get-User -Names (($user.Manager) -split ',')[0].Substring(3)
     } 'Send email' {
       Start-Process "mailto:$($user.EmailAddress)"
     } default {
@@ -1225,10 +1226,10 @@ function Get-Group {
 
       ALIAS: ggroup
 
-    .PARAMETER Name
+    .PARAMETER Names
       Represents the name(s) to search Active Directory groups for. If used, at least one of the arguments passed must match a group's name for the group to be considered a match.
 
-    .PARAMETER Description
+    .PARAMETER Descriptions
       Represents the description(s) to search Active Directory groups for. If used, at least one of the arguments passed must match a group's description for the group to be considered a match.
 
       ALIAS: desc
@@ -1243,22 +1244,22 @@ function Get-Group {
       Signifies that the arguments for every filter should be treated as literals, not wildcard patterns.
 
     .EXAMPLE
-      Get-Group -Name GROUP_NAME
+      Get-Group -Names GROUP_NAME
 
       Retrieves all groups in Active Directory whose name matches "GROUP_NAME" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
 
     .EXAMPLE
-      Get-Group -Name GROUP_*
+      Get-Group -Names GROUP_*
 
       Retrieves all groups in Active Directory whose name begins with "GROUP_" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
 
     .EXAMPLE
-      Get-Group -Description '*email-group@example.com*'
+      Get-Group -Descriptions '*email-group@example.com*'
 
       Retrieves all groups in Active Directory whose description contains "email-group@example.com" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
 
     .EXAMPLE
-      Get-Group -Description '*\\company\department\unit*'
+      Get-Group -Descriptions '*\\company\department\unit*'
 
       Retrieves all groups in Active Directory whose description contains "\\company\department\unit" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
   #>
@@ -1269,14 +1270,14 @@ function Get-Group {
   param (
     [Parameter(Position=0, ValueFromPipeline=$true)]
     [SupportsWildcards()]
-    [string[]]$Name,
+    [string[]]$Names,
 
     [Alias('desc')]
     [SupportsWildcards()]
-    [string[]]$Description,
+    [string[]]$Descriptions,
 
     [SupportsWildcards()]
-    [string[]]$Email,
+    [string[]]$Emails,
 
     [hashtable[]]$Properties = @(
       @{ Title = 'Name';        CanonName = 'Name' },
@@ -1295,7 +1296,7 @@ function Get-Group {
     [switch]$Literal
   )
 
-  if (-not ($Name -or $Description -or $Email)) {
+  if (-not ($Names -or $Descriptions -or $Emails)) {
     Write-Error ('At least one search parameter (that is: Name, ' `
         + 'Description, Email) must be used.')
     return
@@ -1313,21 +1314,21 @@ function Get-Group {
       CanonName = 'Description'
     }
   )
-  if ($Name) {
+  if ($Names) {
     $searchFilters += @{
-      Arguments = $Name
+      Arguments = $Names
       Properties = @('Name', 'DisplayName', 'SamAccountName')
     }
   }
-  if ($Description) {
+  if ($Descriptions) {
     $searchFilters += @{
-      Arguments = $Description
+      Arguments = $Descriptions
       Properties = @('Description')
     }
   }
-  if ($Email) {
+  if ($Emails) {
     $searchFilters += @{
-      Arguments = $Email
+      Arguments = $Emails
       Properties = @('mail')
     }
     $selectProperties += @{
