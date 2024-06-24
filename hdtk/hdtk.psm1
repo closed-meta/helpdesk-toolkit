@@ -1978,7 +1978,7 @@ function Select-ObjectFromTable {
   }
 
   # Displays options to user and requests a selection from the results.
-  $table | Format-Table | Out-String | Write-Host
+  Out-String -InputObject ($table | Format-Table -Wrap) | Write-Host
   $selection = $null
   $selection = Read-Host "Enter selection by # (1-$i)"
   if (-not $selection) {
