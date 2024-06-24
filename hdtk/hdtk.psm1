@@ -919,6 +919,7 @@ function Get-User {
   $actions = @(
     'End',
     'Reload',
+    'Summarize',
     'Reset password',
     'List groups',
     'Add groups',
@@ -1113,6 +1114,8 @@ function Get-User {
       return
     } 'Reload' {
       Get-User -Usernames $user.SamAccountName
+    } 'Summarize' {
+      Copy-UserSummary -Usernames $user.SamAccountName
     } 'Return to search' {
       $user = Select-ObjectFromTable `
           -Objects (Search-Objects @searchArguments) `
