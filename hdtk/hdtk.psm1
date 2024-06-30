@@ -57,93 +57,6 @@ function Access-CopyPastes {
   Invoke-Item $copyPastePath
 }
 
-function Insert-Variables {
-  <#
-    .SYNOPSIS
-      Performs variable substitution on a string (with variables being written in the "$name" format used with PowerShell).
-
-    .PARAMETER String
-      Represents the string that variable substitution will be performed on. Placeholders for variables appear in this initial string using the "$name" format also used with PowerShell.
-
-    .EXAMPLE
-      Insert-Variables 'They live at $address.'
-
-      In this example, it will be assumed that there is a PowerShell variable called "$address" representing the string "308 Negra Arroyo Lane, Albuquerque, New Mexico 87104".
-
-      This command would return the string "They live at 308 Negra Arroyo Lane, Albuquerque, New Mexico 87104".
-
-    .EXAMPLE
-      Insert-Variables 'Please contact $person.'
-
-      In this example, it will be assumed that there is a PowerShell variable called "$person" representing the string "$name ($email)"; another called "$name" representing the string "John Doe"; and a third called "$email" representing the string "john-doe@example.com".
-
-      This command would return the string "Please contact John Doe (john-doe@example.com).".
-  #>
-
-  param (
-    [Parameter(
-      Mandatory=$true,
-      Position=0,
-      ValueFromPipeline=$true
-    )]
-    [string]$String
-  )
-
-  $extension = '.txt'
-  $copyPasteDirectory = 'copypastes'
-  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
-  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
-      | Get-ChildItem -Name).ForEach({
-    $_.SubString(0, ($_.Length - $extension.Length))
-  })
-  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
-      | Get-ChildItem -Name).ForEach({
-        [System.IO.Path]::Combine($copyPastePath, $_)
-      })
-  $contents = $paths.ForEach({
-    (Get-Content $_ -Encoding 'utf8') -join "`n"
-  })
-  $numFiles = $names.Count
-
-  for ($i = 0; $i -lt $numFiles; $i += 1) {
-    $String = $String -replace "\`$$($names[$i])", $contents[$i]
-  }
-  return $String
-}
-
-function Set-CopyPastes {
-  <#
-    .SYNOPSIS
-      Generates various global string variables in PowerShell representing copy-pastes built using the copy-paste documents (determines the name and content of the variable) (see Access-CopyPastes) and variable substitution (see Insert-Variables).
-  #>
-
-  $scope = 'Global'
-  $extension = '.txt'
-  $copyPasteDirectory = 'copypastes'
-  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
-  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
-      | Get-ChildItem -Name).ForEach({
-    $_.SubString(0, ($_.Length - $extension.Length))
-  })
-  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
-      | Get-ChildItem -Name).ForEach({
-        [System.IO.Path]::Combine($copyPastePath, $_)
-      })
-  $contents = $paths.ForEach({
-    (Get-Content $_ -Encoding 'utf8') -join "`n"
-  })
-  $numFiles = $names.Count
-
-  for ($i = 0; $i -lt $numFiles; $i += 1) {
-    New-Variable `
-        -Name $names[$i] `
-        -Value (Insert-Variables $contents[$i]) `
-        -Scope $scope `
-        -Option 'ReadOnly'`
-        -ErrorAction 'SilentlyContinue'
-  }
-}
-
 function Copy-AccountUnlockTicket {
   <#
     .SYNOPSIS
@@ -998,6 +911,291 @@ function Get-Computer {
   }
 }
 
+function Get-Group {
+  <#
+    .SYNOPSIS
+      Allows you to search for groups in Active Directory using various parameters such as Names and Descriptions. At least one argument of every parameter used must match with a group for the group to be considered a match.
+
+      ALIAS: ggroup
+
+    .PARAMETER Names
+      Represents the name(s) to search Active Directory groups for. If used, at least one of the arguments passed must match a group's name for the group to be considered a match.
+
+    .PARAMETER Descriptions
+      Represents the description(s) to search Active Directory groups for. If used, at least one of the arguments passed must match a group's description for the group to be considered a match.
+
+      ALIAS: desc
+
+    .PARAMETER Properties
+      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
+
+    .PARAMETER DisableActions
+      Instructs the function to end after displaying the properties of the user instead of providing the user with follow-up actions.
+
+    .PARAMETER Literal
+      Signifies that the arguments for every filter should be treated as literals, not wildcard patterns.
+
+    .EXAMPLE
+      Get-Group -Names GROUP_NAME
+
+      Retrieves all groups in Active Directory whose name matches "GROUP_NAME" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+
+    .EXAMPLE
+      Get-Group -Names GROUP_*
+
+      Retrieves all groups in Active Directory whose name begins with "GROUP_" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+
+    .EXAMPLE
+      Get-Group -Descriptions '*email-group@example.com*'
+
+      Retrieves all groups in Active Directory whose description contains "email-group@example.com" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+
+    .EXAMPLE
+      Get-Group -Descriptions '*\\company\department\unit*'
+
+      Retrieves all groups in Active Directory whose description contains "\\company\department\unit" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+  #>
+
+  [Alias('ggroup')]
+  [CmdletBinding()]
+
+  param (
+    [Parameter(Position=0, ValueFromPipeline=$true)]
+    [SupportsWildcards()]
+    [string[]]$Names,
+
+    [Alias('desc')]
+    [SupportsWildcards()]
+    [string[]]$Descriptions,
+
+    [SupportsWildcards()]
+    [string[]]$Emails,
+
+    [hashtable[]]$Properties = @(
+      @{ Title = 'Name';        CanonName = 'Name' },
+      @{ Title = '    ';        CanonName = 'SamAccountName' },
+      @{ Title = 'Description'; CanonName = 'Description' },
+      @{ Title = 'Notes';       CanonName = 'info' },
+      @{ Title = 'Email';       CanonName = 'mail' },
+      @{ Title = 'Managed by';  CanonName = 'ManagedBy' },
+      @{ Title = 'Created';     CanonName = 'Created' },
+      @{ Title = 'Modified';    CanonName = 'Modified' }
+    ),
+
+    [Alias('noactions')]
+    [switch]$DisableActions,
+
+    [switch]$Literal
+  )
+
+  if (-not ($Names -or $Descriptions -or $Emails)) {
+    Write-Error ('At least one search parameter (that is: Name, ' `
+        + 'Description, Email) must be used.')
+    return
+  }
+
+  $searchFilters = @()
+  $selectProperties = @(
+    @{ Header = '#' },
+    @{
+      Header = 'NAME'
+      CanonName = 'Name'
+    },
+    @{
+      Header = 'DESCRIPTION'
+      CanonName = 'Description'
+    }
+  )
+  if ($Names) {
+    $searchFilters += @{
+      Arguments = $Names
+      Properties = @('Name', 'DisplayName', 'SamAccountName')
+    }
+  }
+  if ($Descriptions) {
+    $searchFilters += @{
+      Arguments = $Descriptions
+      Properties = @('Description')
+    }
+  }
+  if ($Emails) {
+    $searchFilters += @{
+      Arguments = $Emails
+      Properties = @('mail')
+    }
+    $selectProperties += @{
+      Header = 'EMAIL ADDRESS'
+      CanonName = 'mail'
+    }
+  }
+
+  $searchArguments = @{
+    Filters = $searchFilters
+    Type = 'group'
+    Properties = $Properties.ForEach({ $_['CanonName'] })
+    Literal = $Literal
+  }
+
+  $domainObjects = Search-Objects @searchArguments
+  if (-not $domainObjects) {
+    Write-Error 'No groups found.'
+    return
+  }
+  $group = Select-ObjectFromTable `
+      -Objects $domainObjects `
+      -Properties $selectProperties
+  if (-not $group) {
+    Write-Error 'No selection made.'
+    return
+  }
+
+  # Prepares the "actions" menu.
+  <# Prepares the menu here to reduce lag between when the "information"
+     section is printed and when the "actions" menu is printed. #>
+  $actions = @(
+    'End'
+  )
+  if ($domainObjects.Count -ne 1) {
+    $actions += 'Return to search'
+  }
+  if ($ILLEGAL_GROUPS -notcontains $group.Name) {
+    $actions += 'Add users'
+    $actions += 'Remove users'
+  }
+  if ($group.ManagedBy) {
+    $actions += 'Search manager'
+  }
+
+  # Determines max property display name length for later padding.
+  $maxLength = 0
+  foreach ($property in $Properties) {
+    if ($property['Title'].Length -gt $maxLength) {
+      $maxLength = $property['Title'].Length
+    }
+  }
+
+  # Writes properties for user.
+  Write-Host ''
+  Write-Host '# INFORMATION #'
+  foreach ($property in $Properties) {
+    $canonName = $property['CanonName']
+    $displayName = $property['Title'].PadRight($maxLength)
+    $value = $group.$canonName
+    if ($value -is `
+        [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
+      $value = $value.Value
+    }  # [HACK]
+    if ($value -is [datetime]) {
+      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+      if ($value -lt (Get-Date)) {
+        $diff = (Get-Date) - $value
+        $timeSince = '{0}D : {1}H : {2}M ago' `
+            -f $diff.Days, $diff.Hours, $diff.Minutes
+      }
+    }
+    switch ($canonName) {
+      'Created' {
+        Write-Host "$displayName : $date ($timeSince)"
+      } 'info' {
+        if ($value) {
+          Write-Host "$displayName : $value" -ForegroundColor 'red'
+        }
+      } 'mail' {
+        if ($value) {
+          Write-Host "$displayName : $value"
+        }
+      } 'ManagedBy' {
+        if ($value) {
+          $value = ($value -split ',')[0].Substring(3)
+          Write-Host "$displayName : $value"
+        } else {
+          Write-Host "$displayName : "
+        }
+      } 'Modified' {
+        Write-Host "$displayName : $date ($timeSince)"
+      } default {
+        if ($value -is [datetime]) {
+          Write-Host "$displayName : $date"
+        } else {
+          Write-Host "$displayName : $value"
+        }
+      }
+    }
+  }
+  Write-Host ''
+
+  if ($DisableActions) {
+    return
+  }
+
+  # Prints "actions" menu.
+  :actionLoop while ($true) {
+    Write-Host '# ACTIONS #'
+    $i = 1
+    foreach ($action in $actions) {
+      Write-Host "[$i] $action  " -NoNewLine
+      $i += 1
+    }
+    Write-Host ''
+
+    # Requests selection from the user.
+    Write-Host ''
+    $selection = $null
+    $selection = Read-Host 'Action'
+    if (-not $selection) {
+      break actionLoop
+    }
+    try {
+      $selection = [int]$selection
+    } catch {
+      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
+      continue actionLoop
+    }
+    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
+      Write-Error "Invalid selection. Expected a number 1-$($actions.Count)."
+      continue actionLoop
+    }
+    $selection = $actions[$selection - 1]
+
+    # Executes selection.
+    Write-Host ''
+    switch ($selection) {
+      'End' {
+        Write-Host ''
+        break actionLoop
+      } 'Return to search' {
+        $group = Select-ObjectFromTable `
+            -Objects (Search-Objects @searchArguments) `
+            -Properties $selectProperties
+        Get-Group $group.SamAccountName
+        break actionLoop
+      } 'Add users' {
+        Write-Host ('You may add multiple users by separating them with a ' `
+            + "comma (no space).`n")
+        $users = (Read-Host 'Users to add') -split ','
+        Add-ADGroupMember -Identity $group -Members $users
+        Write-Host ''
+        continue actionLoop
+      } 'Remove users' {
+        Write-Host ('You may remove multiple users by separating them with a ' `
+            + "comma (no space).`n")
+        $users = (Read-Host 'Users to remove') -split ','
+        Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
+        Write-Host ''
+        continue actionLoop
+      } 'Search manager' {
+        Get-User `
+            -Name (($group.ManagedBy) -split ',')[0].Substring(3)
+        break actionLoop
+      } default {
+        Write-Error 'Invalid selection. Expected a number 1-' `
+            + $actions.Count + '.'
+        continue actionLoop
+      }
+    }
+  }
+}
+
 function Get-User {
   <#
     .SYNOPSIS
@@ -1533,289 +1731,58 @@ function Get-User {
   }
 }
 
-function Get-Group {
+function Insert-Variables {
   <#
     .SYNOPSIS
-      Allows you to search for groups in Active Directory using various parameters such as Names and Descriptions. At least one argument of every parameter used must match with a group for the group to be considered a match.
+      Performs variable substitution on a string (with variables being written in the "$name" format used with PowerShell).
 
-      ALIAS: ggroup
-
-    .PARAMETER Names
-      Represents the name(s) to search Active Directory groups for. If used, at least one of the arguments passed must match a group's name for the group to be considered a match.
-
-    .PARAMETER Descriptions
-      Represents the description(s) to search Active Directory groups for. If used, at least one of the arguments passed must match a group's description for the group to be considered a match.
-
-      ALIAS: desc
-
-    .PARAMETER Properties
-      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
-
-    .PARAMETER DisableActions
-      Instructs the function to end after displaying the properties of the user instead of providing the user with follow-up actions.
-
-    .PARAMETER Literal
-      Signifies that the arguments for every filter should be treated as literals, not wildcard patterns.
+    .PARAMETER String
+      Represents the string that variable substitution will be performed on. Placeholders for variables appear in this initial string using the "$name" format also used with PowerShell.
 
     .EXAMPLE
-      Get-Group -Names GROUP_NAME
+      Insert-Variables 'They live at $address.'
 
-      Retrieves all groups in Active Directory whose name matches "GROUP_NAME" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+      In this example, it will be assumed that there is a PowerShell variable called "$address" representing the string "308 Negra Arroyo Lane, Albuquerque, New Mexico 87104".
 
-    .EXAMPLE
-      Get-Group -Names GROUP_*
-
-      Retrieves all groups in Active Directory whose name begins with "GROUP_" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+      This command would return the string "They live at 308 Negra Arroyo Lane, Albuquerque, New Mexico 87104".
 
     .EXAMPLE
-      Get-Group -Descriptions '*email-group@example.com*'
+      Insert-Variables 'Please contact $person.'
 
-      Retrieves all groups in Active Directory whose description contains "email-group@example.com" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+      In this example, it will be assumed that there is a PowerShell variable called "$person" representing the string "$name ($email)"; another called "$name" representing the string "John Doe"; and a third called "$email" representing the string "john-doe@example.com".
 
-    .EXAMPLE
-      Get-Group -Descriptions '*\\company\department\unit*'
-
-      Retrieves all groups in Active Directory whose description contains "\\company\department\unit" and displays a list of properties assosicated with the retrieved group you select from the table of matches.
+      This command would return the string "Please contact John Doe (john-doe@example.com).".
   #>
 
-  [Alias('ggroup')]
-  [CmdletBinding()]
-
   param (
-    [Parameter(Position=0, ValueFromPipeline=$true)]
-    [SupportsWildcards()]
-    [string[]]$Names,
-
-    [Alias('desc')]
-    [SupportsWildcards()]
-    [string[]]$Descriptions,
-
-    [SupportsWildcards()]
-    [string[]]$Emails,
-
-    [hashtable[]]$Properties = @(
-      @{ Title = 'Name';        CanonName = 'Name' },
-      @{ Title = '    ';        CanonName = 'SamAccountName' },
-      @{ Title = 'Description'; CanonName = 'Description' },
-      @{ Title = 'Notes';       CanonName = 'info' },
-      @{ Title = 'Email';       CanonName = 'mail' },
-      @{ Title = 'Managed by';  CanonName = 'ManagedBy' },
-      @{ Title = 'Created';     CanonName = 'Created' },
-      @{ Title = 'Modified';    CanonName = 'Modified' }
-    ),
-
-    [Alias('noactions')]
-    [switch]$DisableActions,
-
-    [switch]$Literal
+    [Parameter(
+      Mandatory=$true,
+      Position=0,
+      ValueFromPipeline=$true
+    )]
+    [string]$String
   )
 
-  if (-not ($Names -or $Descriptions -or $Emails)) {
-    Write-Error ('At least one search parameter (that is: Name, ' `
-        + 'Description, Email) must be used.')
-    return
-  }
+  $extension = '.txt'
+  $copyPasteDirectory = 'copypastes'
+  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
+  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+    $_.SubString(0, ($_.Length - $extension.Length))
+  })
+  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+        [System.IO.Path]::Combine($copyPastePath, $_)
+      })
+  $contents = $paths.ForEach({
+    (Get-Content $_ -Encoding 'utf8') -join "`n"
+  })
+  $numFiles = $names.Count
 
-  $searchFilters = @()
-  $selectProperties = @(
-    @{ Header = '#' },
-    @{
-      Header = 'NAME'
-      CanonName = 'Name'
-    },
-    @{
-      Header = 'DESCRIPTION'
-      CanonName = 'Description'
-    }
-  )
-  if ($Names) {
-    $searchFilters += @{
-      Arguments = $Names
-      Properties = @('Name', 'DisplayName', 'SamAccountName')
-    }
+  for ($i = 0; $i -lt $numFiles; $i += 1) {
+    $String = $String -replace "\`$$($names[$i])", $contents[$i]
   }
-  if ($Descriptions) {
-    $searchFilters += @{
-      Arguments = $Descriptions
-      Properties = @('Description')
-    }
-  }
-  if ($Emails) {
-    $searchFilters += @{
-      Arguments = $Emails
-      Properties = @('mail')
-    }
-    $selectProperties += @{
-      Header = 'EMAIL ADDRESS'
-      CanonName = 'mail'
-    }
-  }
-
-  $searchArguments = @{
-    Filters = $searchFilters
-    Type = 'group'
-    Properties = $Properties.ForEach({ $_['CanonName'] })
-    Literal = $Literal
-  }
-
-  $domainObjects = Search-Objects @searchArguments
-  if (-not $domainObjects) {
-    Write-Error 'No groups found.'
-    return
-  }
-  $group = Select-ObjectFromTable `
-      -Objects $domainObjects `
-      -Properties $selectProperties
-  if (-not $group) {
-    Write-Error 'No selection made.'
-    return
-  }
-
-  # Prepares the "actions" menu.
-  <# Prepares the menu here to reduce lag between when the "information"
-     section is printed and when the "actions" menu is printed. #>
-  $actions = @(
-    'End'
-  )
-  if ($domainObjects.Count -ne 1) {
-    $actions += 'Return to search'
-  }
-  if ($ILLEGAL_GROUPS -notcontains $group.Name) {
-    $actions += 'Add users'
-    $actions += 'Remove users'
-  }
-  if ($group.ManagedBy) {
-    $actions += 'Search manager'
-  }
-
-  # Determines max property display name length for later padding.
-  $maxLength = 0
-  foreach ($property in $Properties) {
-    if ($property['Title'].Length -gt $maxLength) {
-      $maxLength = $property['Title'].Length
-    }
-  }
-
-  # Writes properties for user.
-  Write-Host ''
-  Write-Host '# INFORMATION #'
-  foreach ($property in $Properties) {
-    $canonName = $property['CanonName']
-    $displayName = $property['Title'].PadRight($maxLength)
-    $value = $group.$canonName
-    if ($value -is `
-        [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
-      $value = $value.Value
-    }  # [HACK]
-    if ($value -is [datetime]) {
-      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
-      if ($value -lt (Get-Date)) {
-        $diff = (Get-Date) - $value
-        $timeSince = '{0}D : {1}H : {2}M ago' `
-            -f $diff.Days, $diff.Hours, $diff.Minutes
-      }
-    }
-    switch ($canonName) {
-      'Created' {
-        Write-Host "$displayName : $date ($timeSince)"
-      } 'info' {
-        if ($value) {
-          Write-Host "$displayName : $value" -ForegroundColor 'red'
-        }
-      } 'mail' {
-        if ($value) {
-          Write-Host "$displayName : $value"
-        }
-      } 'ManagedBy' {
-        if ($value) {
-          $value = ($value -split ',')[0].Substring(3)
-          Write-Host "$displayName : $value"
-        } else {
-          Write-Host "$displayName : "
-        }
-      } 'Modified' {
-        Write-Host "$displayName : $date ($timeSince)"
-      } default {
-        if ($value -is [datetime]) {
-          Write-Host "$displayName : $date"
-        } else {
-          Write-Host "$displayName : $value"
-        }
-      }
-    }
-  }
-  Write-Host ''
-
-  if ($DisableActions) {
-    return
-  }
-
-  # Prints "actions" menu.
-  :actionLoop while ($true) {
-    Write-Host '# ACTIONS #'
-    $i = 1
-    foreach ($action in $actions) {
-      Write-Host "[$i] $action  " -NoNewLine
-      $i += 1
-    }
-    Write-Host ''
-
-    # Requests selection from the user.
-    Write-Host ''
-    $selection = $null
-    $selection = Read-Host 'Action'
-    if (-not $selection) {
-      break actionLoop
-    }
-    try {
-      $selection = [int]$selection
-    } catch {
-      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-      continue actionLoop
-    }
-    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
-      Write-Error "Invalid selection. Expected a number 1-$($actions.Count)."
-      continue actionLoop
-    }
-    $selection = $actions[$selection - 1]
-
-    # Executes selection.
-    Write-Host ''
-    switch ($selection) {
-      'End' {
-        Write-Host ''
-        break actionLoop
-      } 'Return to search' {
-        $group = Select-ObjectFromTable `
-            -Objects (Search-Objects @searchArguments) `
-            -Properties $selectProperties
-        Get-Group $group.SamAccountName
-        break actionLoop
-      } 'Add users' {
-        Write-Host ('You may add multiple users by separating them with a ' `
-            + "comma (no space).`n")
-        $users = (Read-Host 'Users to add') -split ','
-        Add-ADGroupMember -Identity $group -Members $users
-        Write-Host ''
-        continue actionLoop
-      } 'Remove users' {
-        Write-Host ('You may remove multiple users by separating them with a ' `
-            + "comma (no space).`n")
-        $users = (Read-Host 'Users to remove') -split ','
-        Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
-        Write-Host ''
-        continue actionLoop
-      } 'Search manager' {
-        Get-User `
-            -Name (($group.ManagedBy) -split ',')[0].Substring(3)
-        break actionLoop
-      } default {
-        Write-Error 'Invalid selection. Expected a number 1-' `
-            + $actions.Count + '.'
-        continue actionLoop
-      }
-    }
-  }
+  return $String
 }
 
 function Reformat-Names {
@@ -2222,6 +2189,39 @@ function Select-ObjectFromTable {
     return
   }
   return $Objects[$selection - 1]
+}
+
+function Set-CopyPastes {
+  <#
+    .SYNOPSIS
+      Generates various global string variables in PowerShell representing copy-pastes built using the copy-paste documents (determines the name and content of the variable) (see Access-CopyPastes) and variable substitution (see Insert-Variables).
+  #>
+
+  $scope = 'Global'
+  $extension = '.txt'
+  $copyPasteDirectory = 'copypastes'
+  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
+  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+    $_.SubString(0, ($_.Length - $extension.Length))
+  })
+  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
+      | Get-ChildItem -Name).ForEach({
+        [System.IO.Path]::Combine($copyPastePath, $_)
+      })
+  $contents = $paths.ForEach({
+    (Get-Content $_ -Encoding 'utf8') -join "`n"
+  })
+  $numFiles = $names.Count
+
+  for ($i = 0; $i -lt $numFiles; $i += 1) {
+    New-Variable `
+        -Name $names[$i] `
+        -Value (Insert-Variables $contents[$i]) `
+        -Scope $scope `
+        -Option 'ReadOnly'`
+        -ErrorAction 'SilentlyContinue'
+  }
 }
 
 function Update-GroupMemberships {
