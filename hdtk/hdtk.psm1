@@ -79,7 +79,7 @@ function Insert-Variables {
   $numFiles = $names.Count
 
   for ($i = 0; $i -lt $numFiles; $i += 1) {
-    $String = $String -replace "`$$($names[$i])", $contents[$i]
+    $String = $String -replace "\`$$($names[$i])", $contents[$i]
   }
   return $String
 }
