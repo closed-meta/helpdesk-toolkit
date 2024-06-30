@@ -918,7 +918,7 @@ function Get-Computer {
         Write-Host ''
         Write-Host "Powering ""$($computer.Name)"" off..."
         Stop-Computer -ComputerName $computer.IPv4Address -Force
-        break actionLoop
+        continue actionLoop
       } 'Reload' {
         Get-Computer $computer.Name
         break actionLoop
@@ -1318,152 +1318,166 @@ function Get-User {
       }
     }
   }
-  Write-Host ''
 
   if ($DisableActions) {
     return
   }
 
-  # Prints "actions" menu.
-  Write-Host '# ACTIONS #'
-  $i = 1
-  foreach ($action in $actions) {
-    Write-Host "[$i] $action  " -NoNewLine
-    $i += 1
-  }
-  Write-Host ''
+  :actionLoop while ($true) {
+    # Prints "actions" menu.
+    Write-Host ''
+    Write-Host '# ACTIONS #'
+    $i = 1
+    foreach ($action in $actions) {
+      Write-Host "[$i] $action  " -NoNewLine
+      $i += 1
+    }
+    Write-Host ''
 
-  Write-Host ''
-  $selection = $null
-  $selection = Read-Host 'Action'
-  if (-not $selection) {
-    return
-  }
-  try {
-    $selection = [int]$selection
-  } catch {
-    Write-Error ('Invalid selection. Expected a number 1-' `
-        + $actions.Count + '.')
-    return
-  }
-  if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
-    Write-Error ('Invalid selection. Expected a number 1-' `
-        + $actions.Count + '.')
-    return
-  }
-  $selection = $actions[$selection - 1]
+    Write-Host ''
+    $selection = $null
+    $selection = Read-Host 'Action'
+    if (-not $selection) {
+      break actionLoop
+    }
+    try {
+      $selection = [int]$selection
+    } catch {
+      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
+      continue actionLoop
+    }
+    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
+      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
+      continue actionLoop
+    }
+    $selection = $actions[$selection - 1]
 
-  # Executes selected action.
-  switch ($selection) {
-    'End' {
-      Write-Host ''
-      return
-    } 'Reload' {
-      Get-User -Usernames $user.SamAccountName
-    } 'Summarize' {
-      Copy-UserSummary -Usernames $user.SamAccountName
-    } 'Return to search' {
-      $user = Select-ObjectFromTable `
-          -Objects (Search-Objects @searchArguments) `
-          -Properties $selectProperties
-      Get-User $user.SamAccountName
-    } 'Unlock' {
-      Unlock-ADAccount -Identity $user.SamAccountName
-      Get-User -Usernames $user.SamAccountName
-    } 'Unlock (copy ticket)' {
-      Copy-AccountUnlockTicket -Type 'domain' -Username $user.SamAccountName
-    } 'Reset password' {
-      Write-Host ''
-      Reset-Password -Users $user.SamAccountName
-      Unlock-ADAccount -Identity $user.SamAccountName
-      Write-Host ''
-      Get-User -Usernames $user.SamAccountName
-    } 'List groups' {
-      $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName `
-          | Get-ADGroup -Properties 'Name', 'Description' | Sort-Object 'Name'
-      $table = New-Object System.Data.DataTable
-      $headers = @('#', 'NAME', 'DESCRIPTION')
-      foreach ($header in $headers) {
-        $quiet = $table.Columns.Add($header)
-      }
-      $i = 0
-      foreach ($group in $groups) {
-        $i += 1
-        $row = $table.NewRow()
+    # Executes selected action.
+    switch ($selection) {
+      'End' {
+        Write-Host ''
+        break actionLoop
+      } 'Reload' {
+        Get-User -Usernames $user.SamAccountName
+        break actionLoop
+      } 'Summarize' {
+        Copy-UserSummary -Usernames $user.SamAccountName
+        continue actionLoop
+      } 'Return to search' {
+        $user = Select-ObjectFromTable `
+            -Objects (Search-Objects @searchArguments) `
+            -Properties $selectProperties
+        Get-User $user.SamAccountName
+        break actionLoop
+      } 'Unlock' {
+        Unlock-ADAccount -Identity $user.SamAccountName
+        Write-Host ''
+        continue actionLoop
+      } 'Unlock (copy ticket)' {
+        Copy-AccountUnlockTicket -Type 'domain' -Username $user.SamAccountName
+        continue actionLoop
+      } 'Reset password' {
+        Write-Host ''
+        Reset-Password -Users $user.SamAccountName
+        Unlock-ADAccount -Identity $user.SamAccountName
+        Write-Host ''
+        continue actionLoop
+      } 'List groups' {
+        $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName `
+            | Get-ADGroup -Properties 'Name', 'Description' | Sort-Object 'Name'
+        $table = New-Object System.Data.DataTable
+        $headers = @('#', 'NAME', 'DESCRIPTION')
         foreach ($header in $headers) {
-          switch ($header) {
-            '#' {
-              $row.'#' = $i
-            } 'NAME' {
-              $row.'NAME' = $group.Name
-            } 'DESCRIPTION' {
-              $row.'DESCRIPTION' = $group.Description
-            } default {
-              Write-Error "Unrecognized header provided (""$header"")."
-              return
+          $quiet = $table.Columns.Add($header)
+        }
+        $i = 0
+        foreach ($group in $groups) {
+          $i += 1
+          $row = $table.NewRow()
+          foreach ($header in $headers) {
+            switch ($header) {
+              '#' {
+                $row.'#' = $i
+              } 'NAME' {
+                $row.'NAME' = $group.Name
+              } 'DESCRIPTION' {
+                $row.'DESCRIPTION' = $group.Description
+              } default {
+                Write-Error "Unrecognized header provided (""$header"")."
+                return
+              }
             }
           }
+          $table.Rows.Add($row)
         }
-        $table.Rows.Add($row)
-      }
-      $table | Format-Table -Wrap
-      Write-Host '# ACTIONS #'
-      $selection = $null
-      $selection = Read-Host "[0] Return  [1-$i] Load group by #"
-      if (-not $selection) {
+        $table | Format-Table -Wrap
+        :groupActions while ($true) {
+          Write-Host '# ACTIONS #'
+          $selection = $null
+          $selection = Read-Host "[0] Return  [1-$i] Load group by #"
+          if (-not $selection) {
+            Get-User $user.SamAccountName
+            break groupActions
+          }
+          try {
+            $selection = [int]$selection
+          } catch {
+            Write-Error "Invalid selection. Expected a number 0-$i."
+            continue groupActions
+          }
+          if ($selection -eq 0) {
+            Get-User $user.SamAccountName
+            break groupActions
+          } elseif (($selection -lt 0) -or ($selection -gt $i)) {
+            Write-Error "Invalid selection. Expected a number 0-$i."
+            continue groupActions
+          } else {
+            Get-Group -Names ($table.Rows[$selection - 1]['NAME'])
+            break groupActions
+          }
+        }
+        break actionLoop
+      } 'Add groups' {
         Write-Host ''
-        return
-      }
-      try {
-        $selection = [int]$selection
-      } catch {
-        Write-Error "Invalid selection. Expected a number 0-$i."
-        return
-      }
-      if ($selection -eq 0) {
-        Get-User $user.SamAccountName
-      } elseif (($selection -lt 0) -or ($selection -gt $i)) {
-        Write-Error "Invalid selection. Expected a number 0-$i."
-        return
-      } else {
-        Get-Group -Names ($table.Rows[$selection - 1]['NAME'])
-      }
-    } 'Add groups' {
-      Write-Host ''
-      Write-Host ('***You may add multiple groups by separating them with ' `
-          + "a comma (no space).***`n")
-      $groups = (Read-Host 'Groups to add') -split ','
-      foreach ($group in $groups) {
-        if ($ILLEGAL_GROUPS -contains $group) {
-          Write-Error ("Skipping ""$group"". Modifying this group is " `
-              + 'restricted by Data Security.')
-        } else {
-          Add-ADGroupMember -Identity $group -Members $user
+        Write-Host ('***You may add multiple groups by separating them with ' `
+            + "a comma (no space).***`n")
+        $groups = (Read-Host 'Groups to add') -split ','
+        foreach ($group in $groups) {
+          if ($ILLEGAL_GROUPS -contains $group) {
+            Write-Error ("Skipping ""$group"". Modifying this group is " `
+                + 'restricted by Data Security.')
+          } else {
+            Add-ADGroupMember -Identity $group -Members $user
+          }
         }
-      }
-      Write-Host ''
-    } 'Remove groups' {
-      Write-Host ''
-      Write-Host ('***You may remove multiple groups by separating them with ' `
-          + "a comma (no space).***`n")
-      $groups = (Read-Host 'Groups to remove') -split ','
-      foreach ($group in $groups) {
-        if ($ILLEGAL_GROUPS -contains $group) {
-          Write-Error ("Skipping ""$group"". Modifying this group is " `
-              + 'restricted by Data Security.')
-        } else {
-          Remove-ADGroupMember -Identity $group -Members $user -Confirm:$false
+        Write-Host ''
+        continue actionLoop
+      } 'Remove groups' {
+        Write-Host ''
+        Write-Host ('***You may remove multiple groups by separating them with ' `
+            + "a comma (no space).***`n")
+        $groups = (Read-Host 'Groups to remove') -split ','
+        foreach ($group in $groups) {
+          if ($ILLEGAL_GROUPS -contains $group) {
+            Write-Error ("Skipping ""$group"". Modifying this group is " `
+                + 'restricted by Data Security.')
+          } else {
+            Remove-ADGroupMember -Identity $group -Members $user -Confirm:$false
+          }
         }
+        Write-Host ''
+        continue actionLoop
+      } 'Search manager' {
+        Get-User -Names (($user.Manager) -split ',')[0].Substring(3)
+        break actionLoop
+      } 'Send email' {
+        Start-Process "mailto:$($user.EmailAddress)"
+        continue actionLoop
+      } default {
+        Write-Host ''
+        Write-Error 'Undefined action.'
+        continue actionLoop
       }
-      Write-Host ''
-    } 'Search manager' {
-      Get-User -Names (($user.Manager) -split ',')[0].Substring(3)
-    } 'Send email' {
-      Start-Process "mailto:$($user.EmailAddress)"
-    } default {
-      Write-Host ''
-      Write-Error 'Undefined action.'
-      return
     }
   }
 }
@@ -1686,62 +1700,69 @@ function Get-Group {
   }
 
   # Prints "actions" menu.
-  Write-Host '# ACTIONS #'
-  $i = 1
-  foreach ($action in $actions) {
-    Write-Host "[$i] $action  " -NoNewLine
-    $i += 1
-  }
-  Write-Host ''
+  :actionLoop while ($true) {
+    Write-Host '# ACTIONS #'
+    $i = 1
+    foreach ($action in $actions) {
+      Write-Host "[$i] $action  " -NoNewLine
+      $i += 1
+    }
+    Write-Host ''
 
-  # Requests selection from the user.
-  Write-Host ''
-  $selection = $null
-  $selection = Read-Host 'Action'
-  if (-not $selection) {
-    return
-  }
-  try {
-    $selection = [int]$selection
-  } catch {
-    Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-    return
-  }
-  if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
-    Write-Error "Invalid selection. Expected a number 1-$($actions.Count)."
-    return
-  }
-  $selection = $actions[$selection - 1]
+    # Requests selection from the user.
+    Write-Host ''
+    $selection = $null
+    $selection = Read-Host 'Action'
+    if (-not $selection) {
+      break actionLoop
+    }
+    try {
+      $selection = [int]$selection
+    } catch {
+      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
+      continue actionLoop
+    }
+    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
+      Write-Error "Invalid selection. Expected a number 1-$($actions.Count)."
+      continue actionLoop
+    }
+    $selection = $actions[$selection - 1]
 
-  # Executes selection.
-  Write-Host ''
-  switch ($selection) {
-    'End' {
-      return
-    } 'Return to search' {
-      $group = Select-ObjectFromTable `
-          -Objects (Search-Objects @searchArguments) `
-          -Properties $selectProperties
-      Get-Group $group.SamAccountName
-    } 'Add users' {
-      Write-Host ('You may add multiple users by separating them with a ' `
-          + "comma (no space).`n")
-      $users = (Read-Host 'Users to add') -split ','
-      Add-ADGroupMember -Identity $group -Members $users
-      Write-Host ''
-    } 'Remove users' {
-      Write-Host ('You may remove multiple users by separating them with a ' `
-          + "comma (no space).`n")
-      $users = (Read-Host 'Users to remove') -split ','
-      Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
-      Write-Host ''
-    } 'Search manager' {
-      Get-User `
-          -Name (($group.ManagedBy) -split ',')[0].Substring(3)
-    } default {
-      Write-Error 'Invalid selection. Expected a number 1-' `
-          + $actions.Count + '.'
-      return
+    # Executes selection.
+    Write-Host ''
+    switch ($selection) {
+      'End' {
+        Write-Host ''
+        break actionLoop
+      } 'Return to search' {
+        $group = Select-ObjectFromTable `
+            -Objects (Search-Objects @searchArguments) `
+            -Properties $selectProperties
+        Get-Group $group.SamAccountName
+        break actionLoop
+      } 'Add users' {
+        Write-Host ('You may add multiple users by separating them with a ' `
+            + "comma (no space).`n")
+        $users = (Read-Host 'Users to add') -split ','
+        Add-ADGroupMember -Identity $group -Members $users
+        Write-Host ''
+        continue actionLoop
+      } 'Remove users' {
+        Write-Host ('You may remove multiple users by separating them with a ' `
+            + "comma (no space).`n")
+        $users = (Read-Host 'Users to remove') -split ','
+        Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
+        Write-Host ''
+        continue actionLoop
+      } 'Search manager' {
+        Get-User `
+            -Name (($group.ManagedBy) -split ',')[0].Substring(3)
+        break actionLoop
+      } default {
+        Write-Error 'Invalid selection. Expected a number 1-' `
+            + $actions.Count + '.'
+        continue actionLoop
+      }
     }
   }
 }
