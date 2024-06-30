@@ -47,12 +47,39 @@
 $ILLEGAL_GROUPS = @()
 
 function Access-CopyPastes {
+  <#
+    .SYNOPSIS
+      Opens the directory containing the copy-paste documents that the copy-paste variables are built from.
+  #>
+
   $copyPasteDirectory = 'copypastes'
   $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
   Invoke-Item $copyPastePath
 }
 
 function Insert-Variables {
+  <#
+    .SYNOPSIS
+      Performs variable substitution on a string (with variables being written in the "$name" format used with PowerShell).
+
+    .PARAMETER String
+      Represents the string that variable substitution will be performed on. Placeholders for variables appear in this initial string using the "$name" format also used with PowerShell.
+
+    .EXAMPLE
+      Insert-Variables 'They live at $address.'
+
+      In this example, it will be assumed that there is a PowerShell variable called "$address" representing the string "308 Negra Arroyo Lane, Albuquerque, New Mexico 87104".
+
+      This command would return the string "They live at 308 Negra Arroyo Lane, Albuquerque, New Mexico 87104".
+
+    .EXAMPLE
+      Insert-Variables 'Please contact $person.'
+
+      In this example, it will be assumed that there is a PowerShell variable called "$person" representing the string "$name ($email)"; another called "$name" representing the string "John Doe"; and a third called "$email" representing the string "john-doe@example.com".
+
+      This command would return the string "Please contact John Doe (john-doe@example.com).".
+  #>
+
   param (
     [Parameter(
       Mandatory=$true,
@@ -85,6 +112,11 @@ function Insert-Variables {
 }
 
 function Set-CopyPastes {
+  <#
+    .SYNOPSIS
+      Generates various global string variables in PowerShell representing copy-pastes built using the copy-paste documents (determines the name and content of the variable) (see Access-CopyPastes) and variable substitution (see Insert-Variables).
+  #>
+
   $scope = 'Global'
   $extension = '.txt'
   $copyPasteDirectory = 'copypastes'
@@ -617,16 +649,35 @@ function Copy-UserSummary {
       > : username -- JD012345
       > : employee ID -- 12345
       > : email -- john-doe@example.com
-      > : department -- information technology
-      > : job title -- help desk analyst
+      > : department -- Information Technology
+      > : job title -- Help Desk Analyst
 
       or -- if this user lacked an email address -- it might look like:
 
       > John Doe
       > : username -- JD012345
       > : employee ID -- 12345
-      > : department -- information technology
-      > : job title -- help desk analyst
+      > : department -- Information Technology
+      > : job title -- Help Desk Analyst
+
+    .EXAMPLE
+      Copy-UserSummary 'DA012345', 'KS067890'
+
+      Displays a list of various properties of the user with the username "JD012345" omitting any properties the user lacks a value for. The text copied to your clipboard and printed may look something like:
+
+      > John Doe
+      > : username -- JD012345
+      > : employee ID -- 12345
+      > : email -- john-doe@example.com
+      > : department -- Information Technology
+      > : job title -- Help Desk Analyst
+      > 
+      > Katie Smith
+      > : username -- KS067890
+      > : employee ID -- 67890
+      > : email -- katie-smith@example.com
+      > : department -- Information Technology
+      > : job title -- Help Desk Analyst
   #>
 
   [Alias('summary')]
@@ -950,7 +1001,7 @@ function Get-Computer {
 function Get-User {
   <#
     .SYNOPSIS
-      Allows you to search Active Directory for users using various parameters such as Username, Employee ID, Name, Phone and Email. At least one argument of every parameter used must match with a user for the user to be considered a match.
+      Allows you to search for users in Active Directory using various parameters such as Username, Employee ID, Name, Phone and Email. At least one argument of every parameter used must match with a user for the user to be considered a match.
 
       By default, after the user's property list has been printed, you are then presented with a variety of actions that can be performed, such as unlocking the account, resetting the password, reloading the list, et cetera. This can be disabled using the DisableActions switch.
 
@@ -1485,7 +1536,7 @@ function Get-User {
 function Get-Group {
   <#
     .SYNOPSIS
-      Allows you to search Active Directory for groups using various parameters such as Name and Description. At least one argument of every parameter used must match with a group for the group to be considered a match.
+      Allows you to search for groups in Active Directory using various parameters such as Names and Descriptions. At least one argument of every parameter used must match with a group for the group to be considered a match.
 
       ALIAS: ggroup
 
@@ -1973,7 +2024,7 @@ function Reset-Password {
 function Search-Objects {
   <#
     .SYNOPSIS
-      Allows you to search Active Directory for objects that match the filters given.
+      Allows you to search for objects in Active Directory that match the filters given.
 
     .PARAMETER Filters
       Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Arguments" and its values represent the values to be searched for according to the values of the corresponding "Properties" key. (2) The second one is called "Properties" and its values represent the properties to match the arguments ("Arguments") against.
@@ -1985,7 +2036,7 @@ function Search-Objects {
       Represents the list of properties needed from the object. Arguments are passed to the Properties parameter of Get-ADUser / Get-ADGroup / Get-ADComputer.
 
     .PARAMETER SearchBase
-      Represents the Active Directory path to search under.
+      Represents the LDAP distinguished name to search under.
 
     .PARAMETER Type
       Represents whether this search is for users, groups or computers.
