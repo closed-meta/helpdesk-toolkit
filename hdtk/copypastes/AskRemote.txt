@@ -1,0 +1,7 @@
+* Do you need to participate in virtual meetings?
+* Do you need to access your personal network folder?
+* Do you need to access applications not accessible on the Internet?
+* Do you have an on-site computer to access remotely while off-site?
+	* What is the name of this on-site computer?
+	* Is this a dedicated or shared computer?
+	* What is the location of this computer?

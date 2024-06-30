@@ -1,0 +1,1 @@
+You can get the path by opening the network drive / folder and taking a screenshot of the address bar in File Explorer. $HowScreenshot

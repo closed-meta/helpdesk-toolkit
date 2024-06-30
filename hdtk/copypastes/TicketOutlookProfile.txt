@@ -1,0 +1,3 @@
+Customer was unable to launch Outlook and would receive an error about their data file being corrupted.
+
+Reset their Outlook profile by going to Control Panel > Mail (Microsoft Outlook) > Profiles > Show Profiles... > Add... > "Profile Name:"="<DATE>" > OK > "Always use this profile"="<DATE>" > "OK"/"Apply". Issue resolved.
