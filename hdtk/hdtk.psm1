@@ -290,9 +290,6 @@ function Copy-ConnectPrinterTicket {
 
       ALIAS: nocomment
 
-    .PARAMETER KeepCase
-      Signifies that the function should not automatically convert the path to the printer and the name of the computer into screamcase / all-caps.
-
     .EXAMPLE
       Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME
 
@@ -374,15 +371,8 @@ function Copy-ConnectPrinterTicket {
     [switch]$DisableSubjectCopy,
 
     [Alias('nocomment')]
-    [switch]$DisableFulfillmentCopy,
-
-    [switch]$KeepCase
+    [switch]$DisableFulfillmentCopy
   )
-
-  if (-not $KeepCase) {
-    $Computers = $Computers.ForEach({ $_.ToUpper() })
-    $Printers = $Printers.ForEach({ $_.ToUpper() })
-  }
 
   $listOfComputers = '"{0}"' -f ($Computers -join '", "')
   $listOfPrinters = '"{0}"' -f ($Printers -join '", "')
@@ -453,9 +443,6 @@ function Copy-MapDriveTicket {
       Signifies that the function should not offer to copy the ticket fulfillment comment after waiting for you to press <enter>.
 
       ALIAS: nocomment
-
-    .PARAMETER KeepCase
-      Signifies that the function should not automatically convert the path to the printer and the name of the computer into screamcase / all-caps.
 
     .PARAMETER Remap
       Signifies that you are re-mapping a drive that was somehow un-mapped as opposed to mapping the path to a drive for the first time on that computer.
@@ -536,14 +523,8 @@ function Copy-MapDriveTicket {
     [Alias('nocomment')]
     [switch]$DisableFulfillmentCopy,
 
-    [switch]$KeepCase,
-
     [switch]$Remap
   )
-
-  if (-not $KeepCase) {
-    $Computers = $Computers.ForEach({ $_.ToUpper() })
-  }
 
   $listOfComputers = '"{0}"' -f ($Computers -join '", "')
   $listOfPaths = '"{0}"' -f ($Paths -join '", "')
