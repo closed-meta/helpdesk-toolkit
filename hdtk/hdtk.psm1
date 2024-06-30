@@ -448,7 +448,7 @@ function Copy-MapDriveTicket {
       Signifies that you are re-mapping a drive that was somehow un-mapped as opposed to mapping the path to a drive for the first time on that computer.
 
     .EXAMPLE
-      Copy-MapDriveTicket -Computer COMPUTER_1 -Path PATH_1
+      Copy-MapDriveTicket -Computers COMPUTER_1 -Paths PATH_1
 
       Copies the following ticket body to your clipboard:
 
