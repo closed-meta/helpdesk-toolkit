@@ -1,1 +1,1 @@
-To take a screenshot and capture an image of your screen, press the <⊞ start>+<shift>+<S> keys and highlight the area you would like to capture in your screenshot. This screenshot image will then be copied to your clipboard.
+To take a screenshot and capture an image of your screen, press ⊞ Start-Shift-S and highlight the area you would like to capture in your screenshot. This screenshot image will then be copied to your clipboard.

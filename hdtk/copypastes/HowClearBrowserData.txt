@@ -1,1 +1,1 @@
-Please press <control>+<shift>+<delete> and make sure you have "all time" set for the time range with "cache" and "cookies" selected. Then click "clear now".
+Please press Control-Shift-Delete and make sure you have "all time" set for the time range with "cache" and "cookies" selected. Then click "clear now".
