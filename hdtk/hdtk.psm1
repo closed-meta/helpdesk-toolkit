@@ -646,6 +646,86 @@ function Copy-UserSummary {
   Write-Host ''
 }
 
+function Format-QuoteBlock {
+  # [TODO] Add manual.
+
+  [Alias('format')]
+
+  $defaultSourceText = [System.IO.Path]::Combine($PSScriptRoot, 'input.txt')
+
+  param (
+    [Parameter(Position=1)]
+    [int]$Level = 1,
+
+    [Parameter(
+      Position=0,
+      ValueFromPipeline=$true
+    )]
+    [string]$SourceText = $defaultSourceText,
+
+    [switch]$Email
+  )
+
+  if (($SourceText -eq $defaultSourceText) `
+      -and (Test-Path -Path $defaultSourceText -IsValid)) {
+    $response = Read-Host ("Are you sure you want to " `
+        + "provide the ""$defaultSourceText"" default " `
+        + "value to the SourceText parameter?" `
+        + "`n [Y] Yes  [N] No  [E] Edit file first")
+    if (($response.ToLower() -eq 'y') -or ($response.ToLower() -eq 'yes')) {
+    } elseif (($response.ToLower() -eq 'n') -or ($response.ToLower() -eq 'no')) {
+      $SourceText = Read-Host 'SourceText'
+    } elseif (($response.ToLower() -eq 'e') -or ($response.ToLower() -eq 'edit')) {
+      Invoke-Item -LiteralPath $defaultSourceText
+      Read-Host 'Press Enter to continue'
+    } else {
+      Write-Error "Unexpected response (""$response"")." `
+          -ErrorAction 'Stop'
+    }
+  }
+  Write-Host ''
+
+  $lines = @()
+  if (Test-Path -Path $SourceText -IsValid) {
+    $lines = Get-Content -Path $SourceText -Encoding 'utf8'
+  } else {
+    $lines = $SourceText -split "`n"
+  }
+  $SourceText = ''
+  $prefix = '> ' * $Level
+  if ($Email) {
+    $inHeaders = $true
+    $notInBody = $true
+    foreach ($line in $lines) {
+      if ($inHeaders -and ($line -notmatch '[^ ]:')) {
+        $inHeaders = $false
+      }
+      if ($notInBody -and (-not $inHeaders) -and $line.Trim()) {
+        $notInBody = $false
+      }
+      if ($inHeaders) {
+        if ($SourceText) {
+          $SourceText = $SourceText, $line -join "`n"
+        } else {
+          $SourceText = $SourceText + $line
+        }
+      } elseif (-not $notInBody) {
+        $SourceText = $SourceText, "$prefix$line" -join "`n"
+      }
+    }
+  } else {
+    foreach ($line in $lines) {
+      $SourceText = $SourceText, "$prefix$line" -join "`n"
+    }
+  }
+
+  Set-Clipboard -Value $SourceText
+  Write-Host ''
+  Write-Host 'Copied...'
+  Write-Host $SourceText -ForegroundColor 'green'
+  Write-Host ''
+}
+
 function Get-Computer {
   <#
     .SYNOPSIS
