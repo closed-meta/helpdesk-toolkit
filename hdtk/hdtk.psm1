@@ -11,7 +11,7 @@
   - Write in the [1TB style](https://en.wikipedia.org/wiki/Indentation_style#One_True_Brace).
   - Identifier naming conventions:
       - whispercase for modules.
-      - PascalCase for classes, methods and properties.
+      - PascalCase for classes, methods, and properties.
       - camelCase for variables (aside from properties).
       - Do not use prefixes (such as `s_`, `_`, `I`, et cetera).
       - Avoid abbreviations.
@@ -60,7 +60,7 @@ function Access-CopyPastes {
 function Copy-AccountUnlockTicket {
   <#
     .SYNOPSIS
-      Builds and copies the body, subject and fulfillment comment of a ticket for an account unlock. Also unlocks the account if the account is a domain / Active Directory account.
+      Builds and copies the body, subject, and fulfillment comment of a ticket for an account unlock. Also unlocks the account if the account is a domain / Active Directory account.
 
       ALIAS: unlock
 
@@ -801,15 +801,16 @@ function Get-Computer {
   :actionLoop while ($true) {
     Write-Host ''
     Write-Host '# ACTIONS #'
+    $actionMenu = ''
     $i = 1
     foreach ($action in $actions) {
-      Write-Host "[$i] $action  " -NoNewLine
+      $actionMenu += "[$i] $action  "
       $i += 1
     }
+    Write-Host "$actionMenu"
     Write-Host ''
 
     # Validates and processes selection response.
-    Write-Host ''
     $selection = $null
     $selection = Read-Host 'Action'
     if (-not $selection) {
@@ -1131,15 +1132,16 @@ function Get-Group {
   # Prints "actions" menu.
   :actionLoop while ($true) {
     Write-Host '# ACTIONS #'
+    $actionMenu = ''
     $i = 1
     foreach ($action in $actions) {
-      Write-Host "[$i] $action  " -NoNewLine
+      $actionMenu += "[$i] $action  "
       $i += 1
     }
+    Write-Host "$actionMenu"
     Write-Host ''
 
     # Requests selection from the user.
-    Write-Host ''
     $selection = $null
     $selection = Read-Host 'Action'
     if (-not $selection) {
@@ -1161,7 +1163,6 @@ function Get-Group {
     Write-Host ''
     switch ($selection) {
       'End' {
-        Write-Host ''
         break actionLoop
       } 'Return to search' {
         $group = Select-ObjectFromTable `
@@ -1199,7 +1200,7 @@ function Get-Group {
 function Get-User {
   <#
     .SYNOPSIS
-      Allows you to search for users in Active Directory using various parameters such as Username, Employee ID, Name, Phone and Email. At least one argument of every parameter used must match with a user for the user to be considered a match.
+      Allows you to search for users in Active Directory using various parameters such as Username, Employee ID, Name, Phone, and Email. At least one argument of every parameter used must match with a user for the user to be considered a match.
 
       By default, after the user's property list has been printed, you are then presented with a variety of actions that can be performed, such as unlocking the account, resetting the password, reloading the list, et cetera. This can be disabled using the DisableActions switch.
 
@@ -1301,10 +1302,10 @@ function Get-User {
       @{ Title = 'Email';           CanonName = 'EmailAddress' },
       @{ Title = 'Phone (ipPhone)'; CanonName = 'ipPhone' },
       @{ Title = '  (otherMobile)'; CanonName = 'otherMobile' },
-      @{ Title = '   (teleNumber)'; CanonName = 'telephoneNumber' },
-      @{ Title = '    (otherHome)'; CanonName = 'otherHomePhone' },
       @{ Title = '       (mobile)'; CanonName = 'mobile' },
       @{ Title = '  (MobilePhone)'; CanonName = 'MobilePhone' },
+      @{ Title = '  (~teleNumber)'; CanonName = 'telephoneNumber' },
+      @{ Title = '   (~otherHome)'; CanonName = 'otherHomePhone' },
       @{ Title = 'Department';      CanonName = 'Department' },
       @{ Title = 'Job title';       CanonName = 'Title' },
       @{ Title = 'Manager';         CanonName = 'Manager' },
@@ -1572,18 +1573,19 @@ function Get-User {
     return
   }
 
-  :actionLoop while ($true) {
     # Prints "actions" menu.
+  :actionLoop while ($true) {
     Write-Host ''
     Write-Host '# ACTIONS #'
+    $actionMenu = ''
     $i = 1
     foreach ($action in $actions) {
-      Write-Host "[$i] $action  " -NoNewLine
+      $actionMenu += "[$i] $action  "
       $i += 1
     }
+    Write-Host "$actionMenu"
     Write-Host ''
 
-    Write-Host ''
     $selection = $null
     $selection = Read-Host 'Action'
     if (-not $selection) {
@@ -1788,7 +1790,7 @@ function Insert-Variables {
 function Reformat-Names {
   <#
     .SYNOPSIS
-      Takes a list of names written in the "last name, first name" format and returns a table of the referenced users with each row containg, the status (disabled account, name not found, et cetera), a number representing the index when there is a list of accounts found under the given name, the name searched (if the LooseSearch or LooserSearch parameter is used), the account's  display name and the account's username.
+      Takes a list of names written in the "last name, first name" format and returns a table of the referenced users with each row containg, the status (disabled account, name not found, et cetera), a number representing the index when there is a list of accounts found under the given name, the name searched (if the LooseSearch or LooserSearch parameter is used), the account's  display name, and the account's username.
 
       ALIAS: reformat
 
