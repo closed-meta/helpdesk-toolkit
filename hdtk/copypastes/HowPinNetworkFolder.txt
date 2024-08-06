@@ -1,0 +1,3 @@
+Please open the link below and then right-click on the "Quick Access" tab in the sidebar and select "Pin current folder to Quick Access".
+
+link: #LINK#
