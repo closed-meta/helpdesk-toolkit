@@ -52,9 +52,9 @@ function Access-CopyPastes {
       Opens the directory containing the copy-paste documents that the copy-paste variables are built from.
   #>
 
-  $copyPasteDirectory = 'copypastes'
-  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
-  Invoke-Item $copyPastePath
+  $directory = 'copypastes'
+  $directory = [System.IO.Path]::Combine($PSScriptRoot, $directory)
+  Invoke-Item $directory
 }
 
 function Copy-AccountUnlockTicket {
@@ -88,49 +88,12 @@ function Copy-AccountUnlockTicket {
     .EXAMPLE
       Copy-AccountUnlockTicket -Type domain -Phone '+1 012 345 6789' -Username JD012345
 
-      Copies the following ticket body to your clipboard:
-
-      > Caller requested that their account (domain) be unlocked.
-      > 
-      > Called from: +1 012 345 6789
-      > 
-      > Account locked on 2024-01-01 at 00:00:00.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (domain)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (domain).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+      Copies, then prints the ticket body, subject, and fulfillment comment.
 
     .EXAMPLE
-      Copy-AccountUnlockTicket domain -user JD012345
+      Copy-AccountUnlockTicket -Type Imprivata
 
-      Copies the following ticket body to your clipboard:
-
-      > Caller requested that their account (domain) be unlocked.
-      > 
-      > Account locked on 2024-01-01 at 00:00:00.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (domain)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (domain).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
-
-    .EXAMPLE
-      Copy-AccountUnlockTicket -Type Imprivata -Phone '+1 012 345 6789'
-
-      Copies the following ticket body to your clipboard:
-
-      > Caller requested that their account (Imprivata) be unlocked.
-      > 
-      > Called from: +1 012 345 6789
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject ("unlock account (Imprivata)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Unlocked account (Imprivata).") to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+      Copies, then prints the ticket body, subject, and fulfillment comment.
   #>
 
   [Alias('unlock')]
@@ -156,8 +119,8 @@ function Copy-AccountUnlockTicket {
     [switch]$DisableFulfillmentCopy
   )
 
-  $body = "Caller requested that their account ($Type) be unlocked."
   $subject = "unlock account ($Type)"
+  $body = "Caller requested that their account ($Type) be unlocked."
   $fulfillment = "Unlocked account ($Type)."
 
   if ($Phone) {
@@ -238,59 +201,22 @@ function Copy-ConnectPrinterTicket {
     .EXAMPLE
       Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+      Copies, then prints the ticket body, subject, and fulfillment comment.
 
     .EXAMPLE
       Copy-ConnectPrinterTicket 'COMPUTER_0', 'COMPUTER_1' 'PRINTER_0', 'PRINTER_1'
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have some computers ("COMPUTER_0", "COMPUTER_1") and some printers ("PRINTER_0", "PRINTER_1") connected.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+      Copies, then prints the ticket body, subject, and fulfillment comment.
 
     .EXAMPLE
       Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME -DisableSubjectCopy
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment to your clipboard and writing "Copied..." plus the ticket fulfillment comment to the command-line interface.
+      Copies, then prints the ticket body and fulfillment comment.
 
     .EXAMPLE
       Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME -DisableFulfillmentCopy
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-    .EXAMPLE
-      Copy-ConnectPrinterTicket COMPUTER_NAME PRINTER_NAME -DisableSubjectCopy -DisableFulfillmentCopy
-
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a computer ("COMPUTER_NAME") and a printer ("PRINTER_NAME") connected.
-
-      Then writes "Copied..." plus the ticket body to the command-line interface.
+      Copies, then prints the ticket body fulfillment comment.
   #>
 
   [Alias('addprinter')]
@@ -322,8 +248,8 @@ function Copy-ConnectPrinterTicket {
   $listOfComputers = '"{0}"' -f ($Computers -join '", "')
   $listOfPrinters = '"{0}"' -f ($Printers -join '", "')
 
-  $body = 'Customer requested to have '
   $subject = 'connect computer(s) to printer(s)'
+  $body = 'Customer requested to have '
   $fulfillment = 'Connected '
 
   if ($Computers.Count -gt 1) {
@@ -395,52 +321,17 @@ function Copy-MapDriveTicket {
     .EXAMPLE
       Copy-MapDriveTicket -Computers COMPUTER_1 -Paths PATH_1
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a drive ("PATH_1") mapped for a computer ("COMPUTER_1").
-
-      Writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-    .EXAMPLE
-      Copy-MapDriveTicket COMPUTER_1 PATH_1
-
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a drive ("PATH_1") mapped for a computer ("COMPUTER_1").
-
-      Writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+      Copies, then prints the ticket body, subject, and fulfillment comment.
 
     .EXAMPLE
       Copy-MapDriveTicket 'COMPUTER_1', 'COMPUTER_2' 'PATH_1', 'PATH_2'
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have drives ("PATH_1", "PATH_2") mapped for some computers ("COMPUTER_1", "COMPUTER_2").
-
-      Writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket subject ("map drive(s)") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the paths ("PATH_1", "PATH_2") to some drives for the computers ("COMPUTER_1", "COMPUTER_2").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+      Copies, then prints the ticket body, subject, and fulfillment comment.
 
     .EXAMPLE
       Copy-MapDriveTicket COMPUTER_1 PATH_1 -DisableSubjectCopy
 
-      Copies the following ticket body to your clipboard:
-
-      > Customer requested to have a drive ("PATH_1") mapped for a computer ("COMPUTER_1").
-
-      Writes "Copied..." plus the ticket body to the command-line interface.
-
-      Then waits for you to hit <enter> before copying the ticket fulfillment comment ("Mapped the path ("PATH_1") to a drive for the computer ("COMPUTER_1").") to your clipboard and writing "Copied..." plus the ticket subject to the command-line interface.
+      Copies, then prints the ticket body and fulfillment comment.
   #>
 
   [Alias('mapdrive')]
@@ -474,8 +365,8 @@ function Copy-MapDriveTicket {
   $listOfComputers = '"{0}"' -f ($Computers -join '", "')
   $listOfPaths = '"{0}"' -f ($Paths -join '", "')
 
-  $body = ''
   $subject = ''
+  $body = ''
   $fulfillment = ''
 
   if ($Remap) {
@@ -538,120 +429,10 @@ function Copy-MapDriveTicket {
   }
 }
 
-function Copy-UserSummary {
-  <#
-    .SYNOPSIS
-      Builds and copies a short list of properties for one or more users in Active Directory.
-
-      ALIAS: summary
-
-    .PARAMETER Usernames
-      Represents the username(s) of one or more Active Directory users to be included in the list.
-
-      ALIAS: users
-
-    .PARAMETER Properties
-      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
-
-    .EXAMPLE
-      Copy-UserSummary JD012345
-
-      Displays a list of various properties of the user with the username "JD012345" omitting any properties the user lacks a value for. The text copied to your clipboard and printed may look something like:
-
-      > John Doe
-      > : username -- JD012345
-      > : employee ID -- 12345
-      > : email -- john-doe@example.com
-      > : department -- Information Technology
-      > : job title -- Help Desk Analyst
-
-      or -- if this user lacked an email address -- it might look like:
-
-      > John Doe
-      > : username -- JD012345
-      > : employee ID -- 12345
-      > : department -- Information Technology
-      > : job title -- Help Desk Analyst
-
-    .EXAMPLE
-      Copy-UserSummary 'DA012345', 'KS067890'
-
-      Displays a list of various properties of the user with the username "JD012345" omitting any properties the user lacks a value for. The text copied to your clipboard and printed may look something like:
-
-      > John Doe
-      > : username -- JD012345
-      > : employee ID -- 12345
-      > : email -- john-doe@example.com
-      > : department -- Information Technology
-      > : job title -- Help Desk Analyst
-      > 
-      > Katie Smith
-      > : username -- KS067890
-      > : employee ID -- 67890
-      > : email -- katie-smith@example.com
-      > : department -- Information Technology
-      > : job title -- Help Desk Analyst
-  #>
-
-  [Alias('summary')]
-
-  param (
-    [Alias('users')]
-    [Parameter(
-      HelpMessage=('Enter the username(s) of the user(s).'),
-      Mandatory=$true,
-      Position=0,
-      ValueFromPipeline=$true
-    )]
-    [string[]]$Usernames,
-
-    [hashtable[]]$Properties = @(
-      @{ Title = 'username';    CanonName = 'SamAccountName' },
-      @{ Title = 'employee ID'; CanonName = 'EmployeeID' },
-      @{ Title = 'email';       CanonName = 'EmailAddress' },
-      @{ Title = 'department';  CanonName = 'Department' },
-      @{ Title = 'job title';   CanonName = 'Title' }
-    )
-  )
-
-  # Retries all relevant users from Active Directory.
-  $users = $Usernames.ForEach({
-    Get-ADUser `
-        -Identity $_ `
-        -Properties ($Properties.ForEach({ $_['CanonName'] }) + 'DisplayName')
-  })
-
-  $userDelimiter = "`n`n"
-  $propertyDelimiter = "`n: "
-  $summary = ''
-  foreach ($user in $users) {
-    if ($summary) {
-      $summary += $userDelimiter
-    }
-    $summary += $user.displayName
-    foreach ($property in $Properties) {
-      $canonName = $property['CanonName']
-      $displayName = $property['Title']
-      $value = $user.$canonName
-      if ($value) {
-        $summary += $propertyDelimiter + "$displayName -- $value"
-      }
-    }  
-  }
-
-  Set-Clipboard -Value $summary
-  Write-Host ''
-  Write-Host 'Copied...'
-  Write-Host $summary -ForegroundColor 'green'
-  Write-Host ''
-}
-
-function Format-QuoteBlock {
+function Format-Quote {
   # [TODO] Add manual.
 
-  [Alias('format')]
-
-  $defaultSourceText = [System.IO.Path]::Combine($PSScriptRoot, 'input.txt')
+  [Alias('quote')]
 
   param (
     [Parameter(Position=1)]
@@ -661,37 +442,18 @@ function Format-QuoteBlock {
       Position=0,
       ValueFromPipeline=$true
     )]
-    [string]$SourceText = $defaultSourceText,
+    [string]$Text = [System.IO.Path]::Combine($PSScriptRoot, 'input.txt'),
 
     [switch]$Email
   )
 
-  if (($SourceText -eq $defaultSourceText) `
-      -and (Test-Path -Path $defaultSourceText -IsValid)) {
-    $response = Read-Host ("Are you sure you want to " `
-        + "provide the ""$defaultSourceText"" default " `
-        + "value to the SourceText parameter?" `
-        + "`n [Y] Yes  [N] No  [E] Edit file first")
-    if (($response.ToLower() -eq 'y') -or ($response.ToLower() -eq 'yes')) {
-    } elseif (($response.ToLower() -eq 'n') -or ($response.ToLower() -eq 'no')) {
-      $SourceText = Read-Host 'SourceText'
-    } elseif (($response.ToLower() -eq 'e') -or ($response.ToLower() -eq 'edit')) {
-      Invoke-Item -LiteralPath $defaultSourceText
-      Read-Host 'Press Enter to continue'
-    } else {
-      Write-Error "Unexpected response (""$response"")." `
-          -ErrorAction 'Stop'
-    }
-  }
-  Write-Host ''
-
   $lines = @()
-  if (Test-Path -Path $SourceText -IsValid) {
-    $lines = Get-Content -Path $SourceText -Encoding 'utf8'
+  if (Test-Path -Path $Text -IsValid) {
+    $lines = Get-Content -Path $Text -Encoding 'utf8'
   } else {
-    $lines = $SourceText -split "`n"
+    $lines = $Text -split "`n"
   }
-  $SourceText = ''
+  $Text = ''
   $prefix = '> ' * $Level
   if ($Email) {
     $inHeaders = $true
@@ -704,26 +466,22 @@ function Format-QuoteBlock {
         $notInBody = $false
       }
       if ($inHeaders) {
-        if ($SourceText) {
-          $SourceText = $SourceText, $line -join "`n"
+        if ($Text) {
+          $Text = $Text, $line -join "`n"
         } else {
-          $SourceText = $SourceText + $line
+          $Text = $Text + $line
         }
       } elseif (-not $notInBody) {
-        $SourceText = $SourceText, "$prefix$line" -join "`n"
+        $Text = $Text, "$prefix$line" -join "`n"
       }
     }
   } else {
     foreach ($line in $lines) {
-      $SourceText = $SourceText, "$prefix$line" -join "`n"
+      $Text = $Text, "$prefix$line" -join "`n"
     }
   }
 
-  Set-Clipboard -Value $SourceText
-  Write-Host ''
-  Write-Host 'Copied...'
-  Write-Host $SourceText -ForegroundColor 'green'
-  Write-Host ''
+  return $Text
 }
 
 function Get-Computer {
@@ -731,7 +489,7 @@ function Get-Computer {
     .SYNOPSIS
       Allows you to search for computers in Active Directory by Name. At least one argument must match the value of the corresponding property of a computer for it to be considered a match.
 
-      ALIAS: gcomputer
+      ALIAS: gcom
 
     .PARAMETER Names
       Represents the name(s) to search computers in Active Directory for. If used, at least one of the arguments passed must match a computer's name for the computer to be considered a match.
@@ -756,7 +514,7 @@ function Get-Computer {
       Retrieves all computers in Active Directory whose name begins with "COMPUTER_" and displays a list of properties assosicated with the retrieved computer you select from the table of matches.
   #>
 
-  [Alias('gcomputer')]
+  [Alias('gcom')]
   [CmdletBinding()]
 
   param (
@@ -807,8 +565,7 @@ function Get-Computer {
     return
   }
 
-  <# Records computer's connection status ahead of time to 
-     reduce (perceived) lag. #>
+  # Records computer's connection status ahead of time.
   $connected = Test-Connection `
       -ComputerName $computer.IPv4Address `
       -Count 1 `
@@ -868,6 +625,7 @@ function Get-Computer {
         $actions += 'Remote'
       }
     } else {
+      Write-Host ''
       Write-Warning '"Remote" action only functional on Windows.'
       $actions += 'Remote'
     }
@@ -921,7 +679,8 @@ function Get-Computer {
         while ($passes -lt 2) {
           $connected = Test-Connection `
               -ComputerName $computer.IPv4Address `
-              -Count 1 `
+              -Count 2 `
+              -Delay 3 `
               -Quiet
           $time = (Get-Date).ToString('HH:mm:ss')
           if ($connected) {
@@ -932,7 +691,6 @@ function Get-Computer {
             Write-Host "[$time] No response received (offline)." `
                 -ForegroundColor 'red'
           }
-          Start-Sleep -Seconds 2
         }
         Get-Computer $computer.Name
         break actionLoop
@@ -944,7 +702,8 @@ function Get-Computer {
         while ($passes -lt 2) {
           $connected = Test-Connection `
               -ComputerName $computer.IPv4Address `
-              -Count 1 `
+              -Count 2 `
+              -Delay 3 `
               -Quiet
           $time = (Get-Date).ToString('HH:mm:ss')
           if ($connected) {
@@ -955,7 +714,6 @@ function Get-Computer {
             Write-Host "[$time] No response received (offline)." `
                 -ForegroundColor 'red'
           }
-          Start-Sleep -Seconds 2
         }
         Get-Computer $computer.Name
         break actionLoop
@@ -974,9 +732,7 @@ function Get-Computer {
         Write-Host $($computer.Name) -ForegroundColor 'green'
         Write-Host ''
         Write-Host "Connecting to ""$($computer.Name)""..."
-        Start-Process `
-            -FilePath 'msra.exe' `
-            -ArgumentList "/offerra $($computer.IPv4Address)"
+        & 'msra.exe' "/offerra $($computer.IPv4Address)"
         continue actionLoop
       } 'Restart' {
         Write-Host ''
@@ -1255,14 +1011,12 @@ function Get-Group {
             + "comma (no space).`n")
         $users = (Read-Host 'Users to add') -split ','
         Add-ADGroupMember -Identity $group -Members $users
-        Write-Host ''
         continue actionLoop
       } 'Remove users' {
         Write-Host ('You may remove multiple users by separating them with a ' `
             + "comma (no space).`n")
         $users = (Read-Host 'Users to remove') -split ','
         Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
-        Write-Host ''
         continue actionLoop
       } 'Search manager' {
         Get-User `
@@ -1692,7 +1446,12 @@ function Get-User {
         Get-User -Usernames $user.SamAccountName
         break actionLoop
       } 'Summarize' {
-        Copy-UserSummary -Usernames $user.SamAccountName
+        $summary = Get-UserSummary -Usernames $user.SamAccountName
+        Set-Clipboard $summary
+        Write-Host ''
+        Write-Host 'Copied...'
+        Write-Host $summary -ForegroundColor 'green'
+        Write-Host ''
         continue actionLoop
       } 'Return to search' {
         $user = Select-ObjectFromTable `
@@ -1813,6 +1572,80 @@ function Get-User {
   }
 }
 
+function Get-UserSummary {
+  <#
+    .SYNOPSIS
+      Returns a short list of properties for one or more users in Active Directory.
+
+      ALIAS: summary
+
+    .PARAMETER Usernames
+      Represents the username(s) of one or more Active Directory users to be included in the list.
+
+      ALIAS: users
+
+    .PARAMETER Properties
+      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
+
+    .EXAMPLE
+      Get-UserSummary JD012345
+
+      Returns a list of various properties of the user with the username "JD012345" omitting any properties the user lacks a value for.
+  #>
+
+  [Alias('summary')]
+
+  param (
+    [Alias('users')]
+    [Parameter(
+      HelpMessage=('Enter the username(s) of the user(s).'),
+      Mandatory=$true,
+      Position=0,
+      ValueFromPipeline=$true
+    )]
+    [string[]]$Usernames,
+
+    [hashtable[]]$Properties = @(
+      @{ Title = 'username';    CanonName = 'SamAccountName' },
+      @{ Title = 'employee ID'; CanonName = 'EmployeeID' },
+      @{ Title = 'email';       CanonName = 'EmailAddress' },
+      @{ Title = 'department';  CanonName = 'Department' },
+      @{ Title = 'job title';   CanonName = 'Title' }
+    )
+  )
+
+  # Retries all relevant users from Active Directory.
+  $users = $Usernames.ForEach({
+    Get-ADUser `
+        -Identity $_ `
+        -Properties ($Properties.ForEach({ $_['CanonName'] }) + 'DisplayName')
+  })
+
+  $delimiter = @{
+    User = "`n`n"
+    Property = "`n- "
+    TitleValue = ': '
+  }
+  $summary = ''
+  foreach ($user in $users) {
+    if ($summary) {
+      $summary += $delimiter['User']
+    }
+    $summary += $user.DisplayName
+    foreach ($property in $Properties) {
+      $canonName = $property['CanonName']
+      $title = $property['Title']
+      $value = $user.$canonName
+      if ($value) {
+        $summary += $delimiter['Property'] + $title `
+            + $delimiter['TitleValue'] + $value
+      }
+    }  
+  }
+
+  return $summary
+}
+
 function Insert-Variables {
   <#
     .SYNOPSIS
@@ -1846,16 +1679,14 @@ function Insert-Variables {
   )
 
   $extension = '.txt'
-  $copyPasteDirectory = 'copypastes'
-  $copyPastePath = [System.IO.Path]::Combine($PSScriptRoot, $copyPasteDirectory)
-  $names = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
-      | Get-ChildItem -Name).ForEach({
+  $parent = 'copypastes'
+  $parent = [System.IO.Path]::Combine($PSScriptRoot, $parent)
+  $names = [System.IO.Path]::Combine($parent, "*$extension") `
+      | Get-ChildItem -Name
+  $paths = $names.ForEach({ [System.IO.Path]::Combine($parent, $_) })
+  $names = $names.ForEach({
     $_.SubString(0, ($_.Length - $extension.Length))
   })
-  $paths = ([System.IO.Path]::Combine($copyPastePath, "*$extension") `
-      | Get-ChildItem -Name).ForEach({
-        [System.IO.Path]::Combine($copyPastePath, $_)
-      })
   $contents = $paths.ForEach({
     (Get-Content $_ -Encoding 'utf8') -join "`n"
   })
@@ -1864,6 +1695,7 @@ function Insert-Variables {
   for ($i = 0; $i -lt $numFiles; $i += 1) {
     $String = $String -replace "\`$$($names[$i])", $contents[$i]
   }
+
   return $String
 }
 
@@ -2292,7 +2124,7 @@ function Set-CopyPastes {
         [System.IO.Path]::Combine($copyPastePath, $_)
       })
   $contents = $paths.ForEach({
-    (Get-Content $_ -Encoding 'utf8') -join "`n"
+    ((Get-Content $_ -Encoding 'utf8') -join "`n").TrimEnd("`n")
   })
   $numFiles = $names.Count
 
