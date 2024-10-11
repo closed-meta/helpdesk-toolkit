@@ -1,1 +1,0 @@
-Please press Control-Shift-Delete and make sure you have "all time" selected with "cache" and "cookies" toggled. Then, click "clear now".

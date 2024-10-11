@@ -1,1 +1,0 @@
-To map a network drive / folder so that it is accessible on the computer, please press ⊞ Start-E to open File Explorer and (under the "Computer" tab) select the "Map network drive" button. After that, you will need to set "Drive" to any unused letter (do not use the U: drive) and set "Folder" to the path you would like to map the drive to.
