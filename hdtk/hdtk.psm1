@@ -247,27 +247,38 @@ function Copy-ConnectPrinterTicket {
     [switch]$DisableFulfillmentCopy
   )
 
-  $listOfComputers = '"{0}"' -f ($Computers -join '", "')
-  $listOfPrinters = '"{0}"' -f ($Printers -join '", "')
+  $i = 1
+  $footnotes = (
+    $Computers.ForEach({ "[$i]: ""$_"""; $i += 1 }) `
+        + $Printers.ForEach({ "[$i]: ""$_"""; $i += 1 })
+  ) -join "`n"
+  $i = 1
+  $references = @{
+    Computers = $Computers.ForEach({ "[$i]"; $i += 1 }) -join ' '
+    Printers = $Printers.ForEach({ "[$i]"; $i += 1 }) -join ' '
+  }
 
   $subject = 'connect computer(s) to printer(s)'
   $body = 'Customer requested to have '
   $fulfillment = 'Connected '
 
   if ($Computers.Count -gt 1) {
-    $body += "some computers ($listOfComputers) and "
-    $fulfillment += "the computers ($listOfComputers) to "
+    $body += "some computers $($references.Computers) and "
+    $fulfillment += "the computers $($references.Computers) to "
   } else {
-    $body += "a computer ($listOfComputers) and "
-    $fulfillment += "the computer ($listOfComputers) to "
+    $body += "a computer $($references.Computers) and "
+    $fulfillment += "the computer $($references.Computers) to "
   }
   if ($Printers.Count -gt 1) {
-    $body += "some printers ($listOfPrinters) connected."
-    $fulfillment += "the printers ($listOfPrinters)."
+    $body += "some printers $($references.Printers) connected."
+    $fulfillment += "the printers $($references.Printers)."
   } else {
-    $body += "a printer ($listOfPrinters) connected."
-    $fulfillment += "the printer ($listOfPrinters)."
+    $body += "a printer $($references.Printers) connected."
+    $fulfillment += "the printer $($references.Printers)."
   }
+  $body += "`n`n$footnotes"
+  $fulfillment += "`n`n$footnotes"
+
   $parameters = @{}
   if (-not $DisableSubjectCopy) {
     $parameters['Subject'] = $subject
@@ -351,12 +362,20 @@ function Copy-MapDriveTicket {
     [switch]$Remap
   )
 
-  $listOfComputers = '"{0}"' -f ($Computers -join '", "')
-  $listOfPaths = '"{0}"' -f ($Paths -join '", "')
-
   $subject = ''
   $body = ''
   $fulfillment = ''
+
+  $i = 1
+  $footnotes = (
+    $Paths.ForEach({ "[$i]: ""$_"""; $i += 1 }) `
+        + $Computers.ForEach({ "[$i]: ""$_"""; $i += 1 })
+  ) -join "`n"
+  $i = 1
+  $references = @{
+    Paths = $Paths.ForEach({ "[$i]"; $i += 1 }) -join ' '
+    Computers = $Computers.ForEach({ "[$i]"; $i += 1 }) -join ' '
+  }
 
   if ($Remap) {
     $subject = 're-map drive(s)'
@@ -365,42 +384,39 @@ function Copy-MapDriveTicket {
   }
 
   if ($Paths.Count -gt 1) {
-    $body = "Customer requested to have drives ($listOfPaths) "
+    $body = "Customer requested to have drives $($references.Paths) "
     if ($Remap) {
-      $fulfillment = "Re-mapped the paths ($listOfPaths) to some drives for the "
+      $fulfillment = "Re-mapped the paths $($references.Paths) to some drives for the "
     } else {
-      $fulfillment = "Mapped the paths ($listOfPaths) to some drives for the "
+      $fulfillment = "Mapped the paths $($references.Paths) to some drives for the "
     }
   } else {
-    $body = "Customer requested to have a drive ($listOfPaths) "
+    $body = "Customer requested to have a drive $($references.Paths) "
     if ($Remap) {
-      $fulfillment = "Re-mapped the path ($listOfPaths) to a drive for the "
+      $fulfillment = "Re-mapped the path $($references.Paths) to a drive for the "
     } else {
-      $fulfillment = "Mapped the path ($listOfPaths) to a drive for the "
+      $fulfillment = "Mapped the path $($references.Paths) to a drive for the "
     }
   }
   if ($Computers.Count -gt 1) {
     if ($Remap) {
-      $body += "re-mapped for some computers ($listOfComputers)."
+      $body += "re-mapped for some computers $($references.Computers)."
     } else {
-      $body += "mapped for some computers ($listOfComputers)."
+      $body += "mapped for some computers $($references.Computers)."
     }
-    $fulfillment += "computers ($listOfComputers)."
+    $fulfillment += "computers $($references.Computers)."
   } else {
     if ($Remap) {
-      $body += "re-mapped for a computer ($listOfComputers)."
+      $body += "re-mapped for a computer $($references.Computers)."
     } else {
-      $body += "mapped for a computer ($listOfComputers)."
+      $body += "mapped for a computer $($references.Computers)."
     }
-    $fulfillment += "computer ($listOfComputers)."
+    $fulfillment += "computer $($references.Computers)."
   }
+  $body += "`n`n$footnotes"
+  $fulfillment += "`n`n$footnotes"
 
-  Set-Clipboard -Value $body
-  Write-Host ''
-  Write-Host 'Copied...'
-  Write-Host $body -ForegroundColor 'green'
-  Write-Host ''
-
+  $parameters = @{}
   if (-not $DisableSubjectCopy) {
     $parameters['Subject'] = $subject
   }
