@@ -67,9 +67,8 @@ function Access-CopyPastes {
       Opens the directory containing the copy-paste documents that the copy-paste variables are built from.
   #>
 
-  $directory = 'copypastes'
-  $directory = [System.IO.Path]::Combine($PSScriptRoot, $directory)
-  Invoke-Item $directory
+  $path = [System.IO.Path]::Combine($PSScriptRoot, 'copypastes')
+  Invoke-Item $path
 }
 
 function Copy-AccountUnlockTicket {
@@ -269,13 +268,7 @@ function Copy-ConnectPrinterTicket {
     $body += "a printer ($listOfPrinters) connected."
     $fulfillment += "the printer ($listOfPrinters)."
   }
-
-  Set-Clipboard -Value $body
-  Write-Host ''
-  Write-Host 'Copied...'
-  Write-Host $body -ForegroundColor 'green'
-  Write-Host ''
-
+  $parameters = @{}
   if (-not $DisableSubjectCopy) {
     $parameters['Subject'] = $subject
   }
@@ -424,21 +417,25 @@ function Format-Quote {
   [Alias('quote')]
 
   param (
-    [Parameter(Position=1)]
-    [int]$Level = 1,
 
     [Parameter(
       Position=0,
       ValueFromPipeline=$true
     )]
-    [string]$Text = [System.IO.Path]::Combine($PSScriptRoot, 'input.txt'),
+    [string]$Text = [System.IO.Path]::Combine($HOME, 'Desktop', 'text.txt'),
+
+    [int]$Level = 1,
 
     [switch]$Email
   )
 
   $lines = @()
-  if (Test-Path -Path $Text -IsValid) {
+  if (Test-Path -Path $Text) {
     $lines = Get-Content -Path $Text -Encoding 'utf8'
+  } elseif (Test-Path -Path $Text -IsValid) {
+    Write-Error "Unable to locate a file at the address provided to the Text " `
+        + "parameter (""$Text""). "
+    $lines = $Text -split "`n"
   } else {
     $lines = $Text -split "`n"
   }
@@ -556,7 +553,7 @@ function Get-Computer {
 
   # Records computer's connection status ahead of time.
   $connected = Test-Connection `
-      -ComputerName $computer.IPv4Address `
+      -ComputerName $computer.Name `
       -Count 1 `
       -Quiet
 
@@ -609,7 +606,7 @@ function Get-Computer {
   )
   if ($connected) {
     $actions += 'Ping (until offline)'
-    if ($PSVersionTable.PSVersion.Major -lt 6) {
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
       if ($IsWindows) {
         $actions += 'Remote'
       }
@@ -721,7 +718,7 @@ function Get-Computer {
         Write-Host $($computer.Name) -ForegroundColor 'green'
         Write-Host ''
         Write-Host "Connecting to ""$($computer.Name)""..."
-        & 'msra.exe' "/offerra $($computer.IPv4Address)"
+        & 'msra.exe' '/offerra' $computer.IPv4Address
         continue actionLoop
       } 'Restart' {
         Write-Host ''
@@ -1000,12 +997,14 @@ function Get-Group {
             + "comma (no space).`n")
         $users = (Read-Host 'Users to add') -split ','
         Add-ADGroupMember -Identity $group -Members $users
+        Write-Host ''
         continue actionLoop
       } 'Remove users' {
         Write-Host ('You may remove multiple users by separating them with a ' `
             + "comma (no space).`n")
         $users = (Read-Host 'Users to remove') -split ','
         Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
+        Write-Host ''
         continue actionLoop
       } 'Search manager' {
         Get-User `
@@ -1595,11 +1594,11 @@ function Get-UserSummary {
     [string[]]$Usernames,
 
     [hashtable[]]$Properties = @(
-      @{ Title = 'username';    CanonName = 'SamAccountName' },
-      @{ Title = 'employee ID'; CanonName = 'EmployeeID' },
-      @{ Title = 'email';       CanonName = 'EmailAddress' },
-      @{ Title = 'department';  CanonName = 'Department' },
-      @{ Title = 'job title';   CanonName = 'Title' }
+      @{ Title = 'Username';    CanonName = 'SamAccountName' },
+      @{ Title = 'Employee ID'; CanonName = 'EmployeeID' },
+      @{ Title = 'Email';       CanonName = 'EmailAddress' },
+      @{ Title = 'Department';  CanonName = 'Department' },
+      @{ Title = 'Job title';   CanonName = 'Title' }
     )
   )
 
