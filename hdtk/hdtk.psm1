@@ -150,27 +150,15 @@ function Copy-AccountUnlockTicket {
     }
   }
 
-  Set-Clipboard -Value $body
-  Write-Host ''
-  Write-Host 'Copied...'
-  Write-Host $body -ForegroundColor 'green'
-  Write-Host ''
-
+  $parameters = @{}
   if (-not $DisableSubjectCopy) {
-    Read-Host 'Press <enter> to copy the ticket subject'
-    Set-Clipboard -Value $subject
-    Write-Host 'Copied...'
-    Write-Host $subject -ForegroundColor 'green'
-    Write-Host ''
+    $parameters['Subject'] = $subject
   }
-
+  $parameters['Body'] = $body
   if (-not $DisableFulfillmentCopy) {
-    Read-Host 'Press <enter> to copy the ticket fulfillment comment'
-    Set-Clipboard -Value $fulfillment
-    Write-Host 'Copied...'
-    Write-Host $fulfillment -ForegroundColor 'green'
-    Write-Host ''
+    $parameters['Fulfillment'] = $fulfillment
   }
+  Copy-Ticket @parameters
 }
 
 function Copy-ConnectPrinterTicket {
@@ -274,20 +262,13 @@ function Copy-ConnectPrinterTicket {
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
-    Read-Host 'Press <enter> to copy the ticket subject'
-    Set-Clipboard -Value $subject
-    Write-Host 'Copied...'
-    Write-Host $subject -ForegroundColor 'green'
-    Write-Host ''
+    $parameters['Subject'] = $subject
   }
-
+  $parameters['Body'] = $body
   if (-not $DisableFulfillmentCopy) {
-    Read-Host 'Press <enter> to copy the ticket fulfillment comment'
-    Set-Clipboard -Value $fulfillment
-    Write-Host 'Copied...'
-    Write-Host $fulfillment -ForegroundColor 'green'
-    Write-Host ''
+    $parameters['Fulfillment'] = $fulfillment
   }
+  Copy-Ticket @parameters
 }
 
 function Copy-MapDriveTicket {
@@ -413,19 +394,37 @@ function Copy-MapDriveTicket {
   Write-Host ''
 
   if (-not $DisableSubjectCopy) {
-    Read-Host 'Press <enter> to copy the ticket subject'
-    Set-Clipboard -Value $subject
-    Write-Host 'Copied...'
-    Write-Host $subject -ForegroundColor 'green'
-    Write-Host ''
+    $parameters['Subject'] = $subject
   }
-
+  $parameters['Body'] = $body
   if (-not $DisableFulfillmentCopy) {
+    $parameters['Fulfillment'] = $fulfillment
+  }
+  Copy-Ticket @parameters
+}
+
+function Copy-Ticket {
+  # [TODO] Add manual.
+
+  param (
+    [string]$Subject,
+    
+    [string]$Body,
+    
+    [string]$Fullfillment
+  )
+
+  if ($Subject) {
+    Read-Host 'Press <enter> to copy the ticket subject'
+    Set-Clipboard $Subject
+  }
+  if ($Body) {
+    Read-Host 'Press <enter> to copy the ticket body'
+    Set-Clipboard $Body
+  }
+  if ($Fulfillment) {
     Read-Host 'Press <enter> to copy the ticket fulfillment comment'
-    Set-Clipboard -Value $fulfillment
-    Write-Host 'Copied...'
-    Write-Host $fulfillment -ForegroundColor 'green'
-    Write-Host ''
+    Set-Clipboard $Fulfillment
   }
 }
 
