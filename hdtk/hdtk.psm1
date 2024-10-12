@@ -412,7 +412,78 @@ function Copy-MapDriveTicket {
 }
 
 function Format-Quote {
-  # [TODO] Add manual.
+  <#
+    .SYNOPSIS
+      Prefixes every line of the provided string with a Markdown blockquote indicator ("> "). The level of blockquote nesting for the text may be specified with the Level parameter; and, to add blockquote syntax to a copied (Outlook-style) email containing a block of headers and a new line before the actual text, you may use the Email parameter.
+
+      ALIAS: quote
+
+    .PARAMETER Text
+      Represents either the input text itself or the path to a text file containing the input string. If an invalid path is provided, the string will be treated as the input text itself.
+
+    .PARAMETER Level
+      Represents the level of nesting for the blockquote. For example, one level of nesting would look like...
+
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      > 
+      > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+      ... and two levels of nesting would look like...
+
+      > > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      > > 
+      > > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+      ... and so on.
+
+    .PARAMETER Email
+      Represents that the input text should not include the block of email headers as part of the blockquote, and that the blank line separating the block of headers of the blockquote should be removed.
+
+      Assumes that the text is the in the Outlook-style format (see below).
+
+      > From: sender@example.com
+      > Sent: Thursday, January 1st, 1970 12:01 AM
+      > To: recipient@example.com
+      > Subject: Lorem Ipsum
+      > 
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+    .EXAMPLE
+      Format-Quote "Paragraph 1`n`nParagraph 2"
+
+      Would return the below:
+
+      > Paragraph 1
+      > 
+      > Paragraph 2
+
+    .EXAMPLE
+      Format-Quote
+
+      Would return the below:
+
+      > From: sender@example.com
+      > Sent: Thursday, January 1st, 1970 12:01 AM
+      > To: recipient@example.com
+      > Subject: Lorem Ipsum
+      > 
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      > 
+      > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+    .EXAMPLE
+      Format-Quote -Email
+
+      Would return the below:
+
+      From: sender@example.com
+      Sent: Thursday, January 1st, 1970 12:01 AM
+      To: recipient@example.com
+      Subject: Lorem Ipsum
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      > 
+      > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+  #>
 
   [Alias('quote')]
 
