@@ -411,6 +411,121 @@ function Copy-MapDriveTicket {
   & $internal['Copy-Ticket'] @parameters
 }
 
+function Copy-PinFolderTicket {
+  <#
+    .SYNOPSIS
+      Builds and copies the body and subject of a ticket for pinning folder(s) to File Explorer's Quick Access.
+
+      ALIAS: pin
+
+    .PARAMETER Computers
+      Represents the name(s) of the computer(s) having the folder(s) pinned.
+
+      ALIAS: pc
+
+    .PARAMETER Paths
+      Represents the path(s) of the folder(s) being pinned to Quick Access in File Explorer.
+
+    .PARAMETER DisableSubjectCopy
+      Signifies that the function should not offer to copy the ticket subject after waiting for you to press <enter>.
+
+      ALIAS: nosubject
+
+    .PARAMETER DisableFulfillmentCopy
+      Signifies that the function should not offer to copy the ticket fulfillment comment after waiting for you to press <enter>.
+
+      ALIAS: nocomment
+
+    .EXAMPLE
+      Copy-PinFolderTicket -Computers COMPUTER_1 -Paths PATH_1
+
+      Copies, then prints the ticket body, subject, and fulfillment comment.
+
+    .EXAMPLE
+      Copy-PinFolderTicket 'COMPUTER_1', 'COMPUTER_2' 'PATH_1', 'PATH_2'
+
+      Copies, then prints the ticket body, subject, and fulfillment comment.
+
+    .EXAMPLE
+      Copy-PinFolderTicket COMPUTER_1 PATH_1 -DisableSubjectCopy
+
+      Copies, then prints the ticket body and fulfillment comment.
+  #>
+
+  [Alias('pin')]
+  [CmdletBinding()]
+
+  param (
+    [Alias('pc')]
+    [Parameter(
+      HelpMessage='Enter the computer name(s).',
+      Mandatory=$true,
+      Position=0
+    )]
+    [string[]]$Computers,
+
+    [Parameter(
+      HelpMessage='Enter the folder path(s).',
+      Mandatory=$true,
+      Position=1
+    )]
+    [string[]]$Paths,
+
+    [Alias('nosubject')]
+    [switch]$DisableSubjectCopy,
+
+    [Alias('nocomment')]
+    [switch]$DisableFulfillmentCopy
+  )
+
+  $subject = ''
+  $body = ''
+  $fulfillment = ''
+
+  $i = 1
+  $footnotes = (
+    $Paths.ForEach({ "[$i]: ""$_"""; $i += 1 }) `
+        + $Computers.ForEach({ "[$i]: ""$_"""; $i += 1 })
+  ) -join "`n"
+  $i = 1
+  $references = @{
+    Paths = $Paths.ForEach({ "[$i]"; $i += 1 }) -join ' '
+    Computers = $Computers.ForEach({ "[$i]"; $i += 1 }) -join ' '
+  }
+
+  $subject = 'pin folder(s) to Quick Access (File Explorer)'
+
+  if ($Paths.Count -gt 1) {
+    $body = "Customer requested to have some folders $($references.Paths) "
+    $fulfillment = "Pinned the folders $($references.Paths) to Quick " `
+        + "Access (File Explorer) for the "
+  } else {
+    $body = "Customer requested to have a folder $($references.Paths) "
+    $fulfillment = "Pinned the folder $($references.Paths) to Quick " `
+        + "Access (File Explorer) for the "
+  }
+  if ($Computers.Count -gt 1) {
+    $body += "pinned to Quick Access (File Explorer) for some computers " `
+        + "$($references.Computers)."
+    $fulfillment += "computers $($references.Computers)."
+  } else {
+    $body += "pinned to Quick Access (File Explorer) for a computer $($references.Computers)."
+    $fulfillment += "computer $($references.Computers)."
+  }
+  $body += "`n`n$footnotes"
+  $fulfillment += "`n`n$footnotes"
+
+  $parameters = @{}
+  if (-not $DisableSubjectCopy) {
+    $parameters['Subject'] = $subject
+  }
+  $parameters['Body'] = $body
+  if (-not $DisableFulfillmentCopy) {
+    $parameters['Fulfillment'] = $fulfillment
+  }
+  & $internal['Copy-Ticket'] @parameters
+}
+
 function Format-Quote {
   <#
     .SYNOPSIS
