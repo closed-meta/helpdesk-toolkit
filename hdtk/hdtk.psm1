@@ -1695,7 +1695,7 @@ function Get-User {
         :groupActions while ($true) {
           Write-Host '# ACTIONS #'
           $selection = $null
-          $selection = Read-Host "[0] Return  [1-$i] Load group by #"
+          $selection = Read-Host "[0] Return  [1-$i] Make selection"
           if (-not $selection) {
             Get-User $user.SamAccountName
             break groupActions
