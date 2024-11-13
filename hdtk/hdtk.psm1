@@ -667,6 +667,7 @@ function Format-Quote {
     foreach ($line in $lines) {
       $Text = $Text, "$prefix$line" -join "`n"
     }
+    $Text.Trim()
   }
 
   return $Text
