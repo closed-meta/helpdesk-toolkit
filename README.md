@@ -6,36 +6,12 @@ But, once the project reached a certain size, i felt that i may as well
 publicly release it as an open-source project (with a few, necessary 
 modifications).
 
-To view the manuals for each module, use PowerShell's built-in [help system](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/02-help-system).
+To view the manuals for each command and each script, use PowerShell's built-in [help system](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/02-help-system).
 
 # contributing
 
 If you have any suggestions or contributions that you would like to make 
 then please feel free to contact me via [Signal](https://signal.me/#eu/wJ637b5VkqBblVxC12ticHfBFsbgnaVv1OCDIPX8pEZCZ650NP1Jm7pQbYQ+Dxi0).
-
-# modules
-
-A brief description of each module will be provided here, but if you would 
-like to view the commands available with each module or the manuals for 
-using said commands, please use the `Get-Command` and `Get-Help` commands 
-from PowerShell's built-in [help system](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/02-help-system).
-
-## hdtk.ad
-
-This module mainly focuses around commands that heavily browse and interact 
-with Active Directory. For example, `Get-User` searches Active Directory for 
-accounts via various available methods, prints certain account properties 
-and allows you to perform certain actions relating to the account (such as 
-resetting the password, printing group memberships, adding group 
-memberships, et cetera).
-
-## hdtk.tickets
-
-The focus for this module is building and copying the body, subject/summary 
-and fulfillment comment for common tickets. For example, 
-`Copy-ConnectPrinterTicket` builds and copies the body, subject and 
-fulfillment comment for a request to connect one or more computers to one 
-or more printers.
 
 # scripting guidelines
 
