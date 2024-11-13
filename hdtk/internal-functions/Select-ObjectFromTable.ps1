@@ -79,19 +79,21 @@ foreach ($object in $Objects) {
 # Displays options to user and requests a selection from the results.
 Out-String -InputObject ($table | Format-Table -Wrap) | Write-Host
 $selection = $null
-$selection = Read-Host "Enter selection by # (1-$i)"
+$selection = Read-Host "[0] Return  [1-$i] Make selection"
 if (-not $selection) {
-  Write-Error "Invalid selection. Expected a number 1-$i."
+  Write-Error "Invalid selection. Expected a number 0-$i."
   return
 }
 try {
   $selection = [int]$selection
 } catch {
-  Write-Error "Invalid selection. Expected a number 1-$i."
+  Write-Error "Invalid selection. Expected a number 0-$i."
   return
 }
-if (($selection -lt 1) -or ($selection -gt $i)) {
-  Write-Error "Invalid selection. Expected a number 1-$i."
+if ($selection -eq 0) {
+  return
+} elseif ($selection -gt $i) {
+  Write-Error "Invalid selection. Expected a number 0-$i."
   return
 }
 return $Objects[$selection - 1]
