@@ -1382,7 +1382,7 @@ function Get-User {
   }
   if ($Names) {
     $searchFilters += @{
-      Arguments = $Names
+      Arguments = $Names.ForEach({ $_.Replace(' ', '*').Replace('-', '*') })
       Properties = @('Name', 'DisplayName')
     }
   }
