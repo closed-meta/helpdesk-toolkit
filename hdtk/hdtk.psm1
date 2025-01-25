@@ -1476,7 +1476,7 @@ function Get-User {
       $value = $value.Value
     }  # [HACK]
     if ($value -is [datetime]) {
-      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+      $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
       if ($value -lt (Get-Date)) {
         $diff = (Get-Date) - $value
         $timeSince = '{0}D : {1}H : {2}M ago' `
