@@ -1341,7 +1341,8 @@ function Get-User {
       @{ Title = 'User created';    CanonName = 'Created' },
       @{ Title = 'User modified';   CanonName = 'Modified' },
       @{ Title = 'Home directory';  CanonName = 'HomeDirectory' },
-      @{ Title = 'X profile';       CanonName = 'ProfilePath' }
+      @{ Title = 'X profile';       CanonName = 'ProfilePath' },
+      @{ Title = 'Object address';  CanonName = 'CanonicalName' }
     ),
 
     [Alias('noactions')]
