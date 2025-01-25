@@ -509,7 +509,7 @@ function Copy-PinFolderTicket {
     Computers = $Computers.ForEach({ "[$i]"; $i += 1 }) -join ' '
   }
 
-  $subject = 'pin folder(s) to Quick Access (File Explorer)'
+  $subject = 'File Explorer: pin folder(s) to Quick Access'
 
   if ($Paths.Count -gt 1) {
     $body = "Customer requested to have some folders $($references.Paths) "
