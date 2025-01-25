@@ -643,34 +643,30 @@ function Format-Quote {
   }
   $Text = ''
   $prefix = '> ' * $Level
+  $inHeaders = $true
+  $inBody = $true
   if ($Email) {
     $inHeaders = $true
-    $notInBody = $true
-    foreach ($line in $lines) {
-      if ($inHeaders -and ($line -notmatch '[^ ]:')) {
-        $inHeaders = $false
-      }
-      if ($notInBody -and (-not $inHeaders) -and $line.Trim()) {
-        $notInBody = $false
-      }
-      if ($inHeaders) {
-        if ($Text) {
-          $Text = $Text, $line -join "`n"
-        } else {
-          $Text = $Text + $line
-        }
-      } elseif (-not $notInBody) {
-        $Text = $Text, "$prefix$line" -join "`n"
-      }
-    }
+    $inBody = $false
   } else {
-    foreach ($line in $lines) {
-      $Text = $Text, "$prefix$line" -join "`n"
+    $inHeaders = $false
+    $inBody = $true
+  }
+  foreach ($line in $lines) {
+    if ($inHeaders -and ($line -notmatch '[^ ]:')) {
+      $inHeaders = $false
     }
-    $Text.Trim()
+    if ((-not $inBody) -and (-not $inHeaders) -and $line.Trim()) {
+      $inBody = $true
+    }
+    if ($inHeaders) {
+      $Text += "$line`n"
+    } elseif ($inBody) {
+      $Text += "$prefix$line`n"
+    }
   }
 
-  return $Text
+  return $Text.Trim()
 }
 
 function Get-Computer {
