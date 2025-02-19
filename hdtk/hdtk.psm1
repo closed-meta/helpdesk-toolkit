@@ -745,6 +745,7 @@ function Get-Computer {
   $computer = & $internal['Select-ObjectFromTable'] `
       -Objects $domainObjects `
       -Properties $selectProperties
+  [Console]::CursorVisible = $false
   if (-not $computer) {
     Write-Error 'No selection made.'
     return
@@ -764,101 +765,89 @@ function Get-Computer {
     }
   }
 
-  # Writes properties for user.
-  Write-Host "`n# INFORMATION #"
-  foreach ($property in $Properties) {
-    $canonName = $property['CanonName']
-    $displayName = $property['Title'].PadRight($maxLength)
-    $value = $computer.$canonName
-    if ($value -is [datetime]) {
-      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+  :rewrite while ($true) {
+    # Clears the window.
+    $start = [Console]::CursorStart + 1
+    for ($i = $start; $i -le [Console]::WindowHeight; $i += 1) {
+      Write-Host (' ' * [Console]::WindowWidth)
     }
-    switch ($canonName) {
-      'LastLogonDate' {
-        Write-Host "$displayName : $date"
-      } 'whenCreated' {
-        Write-Host "$displayName : $date"
-      } default {
-        if ($value -is [datetime]) {
+    [Console]::SetCursorPosition(0, 0)
+
+    # Writes properties for user.
+    Write-Host '# INFORMATION #'
+    foreach ($property in $Properties) {
+      $canonName = $property['CanonName']
+      $displayName = $property['Title'].PadRight($maxLength)
+      $value = $computer.$canonName
+      if ($value -is [datetime]) {
+      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+      }
+      switch ($canonName) {
+        'LastLogonDate' {
           Write-Host "$displayName : $date"
-        } else {
-          Write-Host "$displayName : $value"
+        } 'whenCreated' {
+          Write-Host "$displayName : $date"
+        } default {
+          if ($value -is [datetime]) {
+            Write-Host "$displayName : $date"
+          } else {
+            Write-Host "$displayName : $value"
+          }
         }
       }
     }
-  }
-  $displayName = 'Connection'.PadRight($maxLength)
-  if ($connected) {
-    Write-Host "$displayName : online" -ForegroundColor 'green'
-  } else {
-    Write-Host "$displayName : offline" -ForegroundColor 'red'
-  }
+    $displayName = 'Connection'.PadRight($maxLength)
+    if ($connected) {
+      Write-Host "$displayName : online" -ForegroundColor 'green'
+    } else {
+      Write-Host "$displayName : offline" -ForegroundColor 'red'
+    }
 
-  if ($DisableActions) {
-    return
-  }
+    if ($DisableActions) {
+      [Console]::CursorVisible = $true
+      break rewrite
+    }
 
-  # Prepares the "actions" menu.
-  $actions = @(
-    'End',
-    'Reload'
-  )
-  if ($connected) {
-    $actions += 'Ping (until offline)'
-    if ($PSVersionTable.PSVersion.Major -ge 6) {
-      if ($IsWindows) {
+    # Prepares the "actions" menu.
+    $actions = @(
+      'End',
+      'Reload'
+    )
+    if ($connected) {
+      $actions += 'Ping (until offline)'
+      if ($PSVersionTable.PSVersion.Major -ge 6) {
+        if ($IsWindows) {
+          $actions += 'Remote'
+        }
+      } else {
+        Write-Host ''
+        Write-Warning '"Remote" action only functional on Windows.'
         $actions += 'Remote'
       }
+      $actions += 'Restart'
+      $actions += 'Power off'
     } else {
-      Write-Host ''
-      Write-Warning '"Remote" action only functional on Windows.'
-      $actions += 'Remote'
+      $actions += 'Ping (until online)'
     }
-    $actions += 'Restart'
-    $actions += 'Power off'
-  } else {
-    $actions += 'Ping (until online)'
-  }
 
-  # Prints "actions" menu.
-  :actionLoop while ($true) {
-    Write-Host ''
+    # Displays actions menu.
     Write-Host '# ACTIONS #'
-    $actionMenu = ''
-    $i = 1
-    foreach ($action in $actions) {
-      $actionMenu += "[$i] $action  "
-      $i += 1
-    }
-    Write-Host "$actionMenu"
+    $selection = & $internal['Display-VerticalMenu'] -Options $actions
     Write-Host ''
+    if ($selection -eq $null) {
+      $selection = 'End'
+    } else {
+      $selection = $actions[$selection]
+    }
 
-    # Validates and processes selection response.
-    $selection = $null
-    $selection = Read-Host 'Action'
-    if (-not $selection) {
-      break actionLoop
-    }
-    try {
-      $selection = [int]$selection
-    } catch {
-      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-      continue actionLoop
-    }
-    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
-      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-      continue actionLoop
-    }
-    $selection = $actions[$selection - 1]
-
-    # Executes selected action.
+    # Executes selection.
     switch ($selection) {
       'End' {
         Write-Host ''
-        break actionLoop
+        break rewrite
       } 'Ping (until offline)' {
-        Write-Host ''
-        Write-Host '***Press <control>+<C> to escape.***' -ForegroundColor 'red'
+        Write-Host "`n"
+        Write-Host '***Press <control>+<C> to escape.***' -ForegroundColor 'Red'
         Write-Host ''
         $passes = 0
         while ($passes -lt 2) {
@@ -870,18 +859,18 @@ function Get-Computer {
           $time = (Get-Date).ToString('HH:mm:ss')
           if ($connected) {
             Write-Host "[$time] Response received (online)." `
-                -ForegroundColor 'green'
+                -ForegroundColor 'Green'
           } else {
             $passes += 1
             Write-Host "[$time] No response received (offline)." `
-                -ForegroundColor 'red'
+                -ForegroundColor 'Red'
           }
         }
         Get-Computer $computer.Name
-        break actionLoop
+        break rewrite
       } 'Ping (until online)' {
-        Write-Host ''
-        Write-Host '***Press <control>+<C> to escape.***' -ForegroundColor 'red'
+        Write-Host "`n"
+        Write-Host '***Press <control>+<C> to escape.***' -ForegroundColor 'Red'
         Write-Host ''
         $passes = 0
         while ($passes -lt 2) {
@@ -894,40 +883,40 @@ function Get-Computer {
           if ($connected) {
             $passes += 1
             Write-Host "[$time] Response received (online)." `
-                -ForegroundColor 'green'
+                -ForegroundColor 'Green'
           } else {
             Write-Host "[$time] No response received (offline)." `
-                -ForegroundColor 'red'
+                -ForegroundColor 'Red'
           }
         }
         Get-Computer $computer.Name
-        break actionLoop
+        break rewrite
       } 'Power off' {
-        Write-Host ''
+        Write-Host "`n"
         Write-Host "Powering ""$($computer.Name)"" off..."
         Stop-Computer -ComputerName $computer.IPv4Address -Force
-        continue actionLoop
+        continue rewrite
       } 'Reload' {
         Get-Computer $computer.Name
-        break actionLoop
+        break rewrite
       } 'Remote' {
         Set-Clipboard -Value $($computer.Name)
-        Write-Host ''
+        Write-Host "`n"
         Write-Host 'Copied...'
-        Write-Host $($computer.Name) -ForegroundColor 'green'
+        Write-Host $($computer.Name) -ForegroundColor 'Green'
         Write-Host ''
         Write-Host "Connecting to ""$($computer.Name)""..."
         & 'msra.exe' '/offerra' $computer.IPv4Address
-        continue actionLoop
+        continue rewrite
       } 'Restart' {
-        Write-Host ''
+        Write-Host "`n"
         Write-Host "Restarting ""$($computer.Name)""..."
         Restart-Computer -ComputerName $computer.IPv4Address -Force
-        continue actionLoop
+        continue rewrite
       } default {
         Write-Host ''
         Write-Error 'Undefined action.'
-        continue actionLoop
+        continue rewrite
       }
     }
   }
