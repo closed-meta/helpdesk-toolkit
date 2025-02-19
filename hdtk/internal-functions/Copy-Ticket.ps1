@@ -2,10 +2,10 @@
 
 param (
   [string]$Subject,
-  
+
   [string]$Body,
-  
-  [string]$Fullfillment
+
+  [string]$Fulfillment
 )
 
 if ($Subject) {
