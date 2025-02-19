@@ -1381,9 +1381,16 @@ function Get-User {
     }
   }
   if ($Names) {
-    $searchFilters += @{
-      Arguments = $Names.ForEach({ $_.Replace(' ', '*').Replace('-', '*') })
-      Properties = @('Name', 'DisplayName')
+    if ($Literal) {
+      $searchFilters += @{
+        Arguments = $Names
+        Properties = @('Name', 'DisplayName')
+      }
+    } else {
+      $searchFilters += @{
+        Arguments = $Names.ForEach({ $_.Replace(' ', '*').Replace('-', '*') })
+        Properties = @('Name', 'DisplayName')
+      }
     }
   }
   if ($Phones) {
