@@ -780,7 +780,7 @@ function Get-Computer {
       $displayName = $property['Title'].PadRight($maxLength)
       $value = $computer.$canonName
       if ($value -is [datetime]) {
-      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
+      $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
       }
       switch ($canonName) {
         'LastLogonDate' {
@@ -1055,6 +1055,7 @@ function Get-Group {
   $group = & $internal['Select-ObjectFromTable'] `
       -Objects $domainObjects `
       -Properties $selectProperties
+  [Console]::CursorVisible = $false
   if (-not $group) {
     Write-Error 'No selection made.'
     return
@@ -1085,125 +1086,118 @@ function Get-Group {
     }
   }
 
-  # Writes properties for user.
-  Write-Host ''
-  Write-Host '# INFORMATION #'
-  foreach ($property in $Properties) {
-    $canonName = $property['CanonName']
-    $displayName = $property['Title'].PadRight($maxLength)
-    $value = $group.$canonName
-    if ($value -is `
-        [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
-      $value = $value.Value
-    }  # [HACK]
-    if ($value -is [datetime]) {
-      $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
-      if ($value -lt (Get-Date)) {
-        $diff = (Get-Date) - $value
-        $timeSince = '{0}D : {1}H : {2}M ago' `
-            -f $diff.Days, $diff.Hours, $diff.Minutes
-      }
+  :rewrite while ($true) {
+    # Clears the window.
+    $start = [Console]::CursorStart + 1
+    for ($i = $start; $i -le [Console]::WindowHeight; $i += 1) {
+      Write-Host (' ' * [Console]::WindowWidth)
     }
-    switch ($canonName) {
-      'Created' {
-        Write-Host "$displayName : $date ($timeSince)"
-      } 'info' {
-        if ($value) {
-          Write-Host "$displayName : $value" -ForegroundColor 'red'
-        }
-      } 'mail' {
-        if ($value) {
-          Write-Host "$displayName : $value"
-        }
-      } 'ManagedBy' {
-        if ($value) {
-          $value = ($value -split ',')[0].Substring(3)
-          Write-Host "$displayName : $value"
-        } else {
-          Write-Host "$displayName : "
-        }
-      } 'Modified' {
-        Write-Host "$displayName : $date ($timeSince)"
-      } default {
-        if ($value -is [datetime]) {
-          Write-Host "$displayName : $date"
-        } else {
-          Write-Host "$displayName : $value"
+    [Console]::SetCursorPosition(0, 0)
+
+    # Writes properties for user.
+    Write-Host '# INFORMATION #'
+    foreach ($property in $Properties) {
+      $canonName = $property['CanonName']
+      $displayName = $property['Title'].PadRight($maxLength)
+      $value = $group.$canonName
+      if ($value -is `
+          [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
+        $value = $value.Value
+      }  # [HACK]
+      if ($value -is [datetime]) {
+        $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
+        if ($value -lt (Get-Date)) {
+          $diff = (Get-Date) - $value
+          $timeSince = '{0}D : {1}H : {2}M ago' `
+              -f $diff.Days, $diff.Hours, $diff.Minutes
         }
       }
+      switch ($canonName) {
+        'Created' {
+          Write-Host "$displayName : $date ($timeSince)"
+        } 'info' {
+          if ($value) {
+            Write-Host "$displayName : $value" -ForegroundColor 'red'
+          }
+        } 'mail' {
+          if ($value) {
+            Write-Host "$displayName : $value"
+          }
+        } 'ManagedBy' {
+          if ($value) {
+            $value = ($value -split ',')[0].Substring(3)
+            Write-Host "$displayName : $value"
+          } else {
+            Write-Host "$displayName : "
+          }
+        } 'Modified' {
+          Write-Host "$displayName : $date ($timeSince)"
+        } default {
+          if ($value -is [datetime]) {
+            Write-Host "$displayName : $date"
+          } else {
+            Write-Host "$displayName : $value"
+          }
+        }
+      }
     }
-  }
-  Write-Host ''
-
-  if ($DisableActions) {
-    return
-  }
-
-  # Prints "actions" menu.
-  :actionLoop while ($true) {
-    Write-Host '# ACTIONS #'
-    $actionMenu = ''
-    $i = 1
-    foreach ($action in $actions) {
-      $actionMenu += "[$i] $action  "
-      $i += 1
-    }
-    Write-Host "$actionMenu"
     Write-Host ''
 
-    # Requests selection from the user.
-    $selection = $null
-    $selection = Read-Host 'Action'
-    if (-not $selection) {
-      break actionLoop
+    if ($DisableActions) {
+      [Console]::CursorVisible = $true
+      break rewrite
     }
-    try {
-      $selection = [int]$selection
-    } catch {
-      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-      continue actionLoop
+
+    # Displays actions menu.
+    Write-Host '# ACTIONS #'
+    $selection = & $internal['Display-VerticalMenu'] -Options $actions
+    Write-Host ''
+    if ($selection -eq $null) {
+      $selection = 'End'
+    } else {
+      $selection = $actions[$selection]
     }
-    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
-      Write-Error "Invalid selection. Expected a number 1-$($actions.Count)."
-      continue actionLoop
-    }
-    $selection = $actions[$selection - 1]
 
     # Executes selection.
-    Write-Host ''
     switch ($selection) {
       'End' {
-        break actionLoop
+        Write-Host ''
+        break rewrite
       } 'Return to search' {
+        Write-Host ''
         $group = & $internal['Select-ObjectFromTable'] `
             -Objects (& $internal['Search-Objects'] @searchArguments) `
             -Properties $selectProperties
         Get-Group $group.SamAccountName
-        break actionLoop
+        break rewrite
       } 'Add users' {
+        Write-Host ''
         Write-Host ('You may add multiple users by separating them with a ' `
-            + "comma (no space).`n")
-        $users = (Read-Host 'Users to add') -split ','
+            + "comma.`n")
+        $users = ((Read-Host 'Users to add') -split ',').Trim()
         Add-ADGroupMember -Identity $group -Members $users
         Write-Host ''
-        continue actionLoop
+        break rewrite
       } 'Remove users' {
+        Write-Host ''
         Write-Host ('You may remove multiple users by separating them with a ' `
-            + "comma (no space).`n")
-        $users = (Read-Host 'Users to remove') -split ','
+            + "comma.`n")
+        $users = ((Read-Host 'Users to remove') -split ',').Trim()
         Remove-ADGroupMember -Identity $group -Members $users -Confirm:$false
         Write-Host ''
-        continue actionLoop
+        break rewrite
       } 'Search manager' {
+        Write-Host ''
         Get-User `
             -Name (($group.ManagedBy) -split ',')[0].Substring(3)
-        break actionLoop
+        break rewrite
       } default {
-        Write-Error 'Invalid selection. Expected a number 1-' `
-            + $actions.Count + '.'
-        continue actionLoop
+        Write-Host ''
+        Write-Error 'Unrecognized action.'
+        break rewrite
       }
     }
+    [Console]::CursorVisible = $true
   }
 }
 
