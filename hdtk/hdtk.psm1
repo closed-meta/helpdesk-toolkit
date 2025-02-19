@@ -1455,174 +1455,164 @@ function Get-User {
     }
   }
 
-  # Writes properties for user.
-  Write-Host "`n# INFORMATION #"
-  foreach ($property in $Properties) {
-    $canonName = $property['CanonName']
-    $displayName = $property['Title'].PadRight($maxLength)
-    $value = $user.$canonName
-    if ($value -is `
-        [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
-      $value = $value.Value
-    }  # [HACK]
-    if ($value -is [datetime]) {
-      $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
-      if ($value -lt (Get-Date)) {
-        $diff = (Get-Date) - $value
-        $timeSince = '{0}D : {1}H : {2}M ago' `
-            -f $diff.Days, $diff.Hours, $diff.Minutes
-      }
+  :rewrite while ($true) {
+    # Clears the window.
+    $start = [Console]::CursorStart + 1
+    for ($i = $start; $i -le [Console]::WindowHeight; $i += 1) {
+      Write-Host (' ' * [Console]::WindowWidth)
     }
-    switch ($canonName) {
-      'accountExpires' {
-        if ($value) {
-          if (($value -eq 0) -or ($value -gt [DateTime]::MaxValue.Ticks)) {
-            continue
-          } else {
-            $value = ([DateTime]$value).AddYears(1600).ToLocalTime()
-          }
-          $date = $value.ToString('yyyy-MM-dd HH:mm:ss')
-          if ($value -lt (Get-Date)) {
-            $diff = (Get-Date) - $value
-            $timeSince = '{0}D : {1}H : {2}M ago' `
-                -f $diff.Days, $diff.Hours, $diff.Minutes
-          }
-          if ($value -lt (Get-Date)) {
-            Write-Host "$displayName : $date ($timeSince)" `
-                -ForegroundColor 'red'
-          } else {
-            Write-Host "$displayName : $date" -ForegroundColor 'green'
-          }
-        }
-      } 'AccountLockoutTime' {
-        if ($value) {
-          Write-Host "$displayName : $date ($timeSince)" `
-              -ForegroundColor 'red'
-        }
-      } 'Created' {
-        if ($value) {
-          Write-Host "$displayName : $date ($timeSince)"
-        }
-      } 'EmployeeID' {
-        if ($value) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        } else {
-          Write-Host "$displayName : $value" -ForegroundColor 'red'
-        }
-      } 'Enabled' {
-        if (-not $value) {
-          Write-Host "$displayName : $value" -ForegroundColor 'red'
-        }
-      } 'LastBadPasswordAttempt' {
-        if ($value) {
-          Write-Host "$displayName : $date ($timeSince)"
-        }
-      } 'LastLogonDate' {
-        if ($value) {
-          Write-Host "$displayName : $date ($timeSince)"
-        }
-      } 'LockedOut' {
-        if ($value) {
-          Write-Host "$displayName : $value" -ForegroundColor 'red'
-        }
-      } 'Manager' {
-        if ($value) {
-          $value = ($value -split ',')[0].Substring(3)
-          Write-Host "$displayName : $value"
-        } else {
-          Write-Host "$displayName : "
-        }
-      } 'mobile' {
-        if ("$value".Trim()) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        }
-      } 'MobilePhone' {
-        if ("$value".Trim()) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        }
-      } 'Modified' {
-        Write-Host "$displayName : $date ($timeSince)"
-      } 'PasswordLastSet' {
-        if ($value) {
-          if ($diff.Days -ge 90) {
-            Write-Host "$displayName : $date ($timeSince)" `
-                -ForegroundColor 'red'
-          } else {
-            Write-Host "$displayName : $date ($timeSince)" `
-                -ForegroundColor 'green'
-          }
-        } else {
-          Write-Host "$displayName : change at next sign-in" `
-              -ForegroundColor 'yellow'
-        }
-      } 'ProfilePath' {
-        if ($value) {
-          Write-Host "$displayName : $value"
-        }
-      } 'otherHomePhone' {
-        if ("$value".Trim()) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        }
-      } 'otherMobile' {
-        if ("$value".Trim()) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        }
-      } 'telephoneNumber' {
-        if ("$value".Trim()) {
-          Write-Host "$displayName : $value" -ForegroundColor 'green'
-        }
-      } default {
-        if ($value -is [datetime]) {
-          Write-Host "$displayName : $date"
-        } else {
-          Write-Host "$displayName : $value"
+    [Console]::SetCursorPosition(0, 0)
+
+    # Writes properties for user.
+    Write-Host '# INFORMATION #'
+    foreach ($property in $Properties) {
+      $canonName = $property['CanonName']
+      $displayName = $property['Title'].PadRight($maxLength)
+      $value = $user.$canonName
+      if ($value -is `
+          [Microsoft.ActiveDirectory.Management.ADPropertyValueCollection]) {
+        $value = $value.Value
+      }  # [HACK]
+      if ($value -is [datetime]) {
+        $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
+        if ($value -lt (Get-Date)) {
+          $diff = (Get-Date) - $value
+          $timeSince = '{0}D : {1}H : {2}M ago' `
+              -f $diff.Days, $diff.Hours, $diff.Minutes
         }
       }
+      switch ($canonName) {
+        'accountExpires' {
+          if ($value) {
+            if (($value -eq 0) -or ($value -gt [DateTime]::MaxValue.Ticks)) {
+              continue
+            } else {
+              $value = ([DateTime]$value).AddYears(1600).ToLocalTime()
+            }
+            $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
+            if ($value -lt (Get-Date)) {
+              $diff = (Get-Date) - $value
+              $timeSince = '{0}D : {1}H : {2}M ago' `
+                  -f $diff.Days, $diff.Hours, $diff.Minutes
+            }
+            if ($value -lt (Get-Date)) {
+              Write-Host "$displayName : $date ($timeSince)" `
+                  -ForegroundColor 'Red'
+            } else {
+              Write-Host "$displayName : $date" -ForegroundColor 'Green'
+            }
+          }
+        } 'AccountLockoutTime' {
+          if ($value) {
+            Write-Host "$displayName : $date ($timeSince)" `
+                -ForegroundColor 'Red'
+          }
+        } 'Created' {
+          if ($value) {
+            Write-Host "$displayName : $date ($timeSince)"
+          }
+        } 'EmployeeID' {
+          if ($value) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Green'
+          } else {
+            Write-Host "$displayName : $value" -ForegroundColor 'Red'
+          }
+        } 'Enabled' {
+          if (-not $value) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Red'
+          }
+        } 'LastBadPasswordAttempt' {
+          if ($value) {
+            Write-Host "$displayName : $date ($timeSince)"
+          }
+        } 'LastLogonDate' {
+          if ($value) {
+            Write-Host "$displayName : $date ($timeSince)"
+          }
+        } 'LockedOut' {
+          if ($value) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Red'
+          }
+        } 'Manager' {
+          if ($value) {
+            $value = ($value -split ',')[0].Substring(3)
+            Write-Host "$displayName : $value"
+          } else {
+            Write-Host "$displayName : "
+          }
+        } 'mobile' {
+          if ("$value".Trim()) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Green'
+          }
+        } 'MobilePhone' {
+          if ("$value".Trim()) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Green'
+          }
+        } 'Modified' {
+          Write-Host "$displayName : $date ($timeSince)"
+        } 'PasswordLastSet' {
+          if ($value) {
+            if ($diff.Days -ge 90) {
+              Write-Host "$displayName : $date ($timeSince)" `
+                  -ForegroundColor 'Red'
+            } else {
+              Write-Host "$displayName : $date ($timeSince)" `
+                  -ForegroundColor 'Green'
+            }
+          } else {
+            Write-Host "$displayName : change at next sign on" `
+                -ForegroundColor 'Yellow'
+          }
+        } 'ProfilePath' {
+          if ($value) {
+            Write-Host "$displayName : $value"
+          }
+        } 'otherHomePhone' {
+          if ("$value".Trim()) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Green'
+          }
+        } 'otherMobile' {
+          if ("$value".Trim()) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Green'
+          }
+        } 'telephoneNumber' {
+          if ("$value".Trim()) {
+            Write-Host "$displayName : $value" -ForegroundColor 'Green'
+          }
+        } default {
+          if ($value -is [datetime]) {
+            Write-Host "$displayName : $date"
+          } else {
+            Write-Host "$displayName : $value"
+          }
+        }
+      }
     }
-  }
-
-  if ($DisableActions) {
-    return
-  }
-
-    # Prints "actions" menu.
-  :actionLoop while ($true) {
     Write-Host ''
+
+    if ($DisableActions) {
+      [Console]::CursorVisible = $true
+      break rewrite
+    }
+
+    # Displays actions menu.
     Write-Host '# ACTIONS #'
-    $actionMenu = ''
-    $i = 1
-    foreach ($action in $actions) {
-      $actionMenu += "[$i] $action  "
-      $i += 1
-    }
-    Write-Host "$actionMenu"
+    $selection = & $internal['Display-VerticalMenu'] -Options $actions
     Write-Host ''
+    if ($selection -eq $null) {
+      $selection = 'End'
+    } else {
+      $selection = $actions[$selection]
+    }
 
-    $selection = $null
-    $selection = Read-Host 'Action'
-    if (-not $selection) {
-      break actionLoop
-    }
-    try {
-      $selection = [int]$selection
-    } catch {
-      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-      continue actionLoop
-    }
-    if (($selection -lt 1) -or ($selection -gt $actions.Count)) {
-      Write-Error ("Invalid selection. Expected a number 1-$($actions.Count).")
-      continue actionLoop
-    }
-    $selection = $actions[$selection - 1]
-
-    # Executes selected action.
+    # Executes selection.
     switch ($selection) {
       'End' {
         Write-Host ''
-        break actionLoop
+        break rewrite
       } 'Reload' {
         Get-User -Usernames $user.SamAccountName
-        break actionLoop
+        break rewrite
       } 'Summarize' {
         $summary = Get-UserSummary -Usernames $user.SamAccountName
         Set-Clipboard $summary
@@ -1630,26 +1620,31 @@ function Get-User {
         Write-Host 'Copied...'
         Write-Host $summary -ForegroundColor 'green'
         Write-Host ''
-        continue actionLoop
+        break rewrite
       } 'Return to search' {
-        $user = & $internal['Select-ObjectFromTable'] `
+        Write-Host ''
+        $group = & $internal['Select-ObjectFromTable'] `
             -Objects (& $internal['Search-Objects'] @searchArguments) `
             -Properties $selectProperties
-        Get-User $user.SamAccountName
-        break actionLoop
+        Get-User $group.SamAccountName
+        break rewrite
       } 'Unlock' {
         Unlock-ADAccount -Identity $user.SamAccountName
         Write-Host ''
-        continue actionLoop
+        [Console]::CursorVisible = $false
+        break rewrite
       } 'Unlock (copy ticket)' {
+        Write-Host ''
         Copy-AccountUnlockTicket -Type 'domain' -Username $user.SamAccountName
-        continue actionLoop
+        [Console]::CursorVisible = $false
+        break rewrite
       } 'Reset password' {
         Write-Host ''
         Reset-Password -Users $user.SamAccountName
         Unlock-ADAccount -Identity $user.SamAccountName
         Write-Host ''
-        continue actionLoop
+        [Console]::CursorVisible = $false
+        break rewrite
       } 'List groups' {
         $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName `
             | Get-ADGroup -Properties 'Name', 'Description' | Sort-Object 'Name'
@@ -1672,20 +1667,22 @@ function Get-User {
                 $row.'DESCRIPTION' = $group.Description
               } default {
                 Write-Error "Unrecognized header provided (""$header"")."
-                return
+                break rewrite
               }
             }
           }
           $table.Rows.Add($row)
         }
         $table | Format-Table -Wrap
+        [Console]::CursorTop = [Console]::CursorTop - 1
         :groupActions while ($true) {
           Write-Host '# ACTIONS #'
           $selection = $null
           $selection = Read-Host "[0] Return  [1-$i] Make selection"
           if (-not $selection) {
             Get-User $user.SamAccountName
-            break groupActions
+            [Console]::CursorVisible = $false
+            break rewrite
           }
           try {
             $selection = [int]$selection
@@ -1695,21 +1692,21 @@ function Get-User {
           }
           if ($selection -eq 0) {
             Get-User $user.SamAccountName
-            break groupActions
+            break rewrite
           } elseif (($selection -lt 0) -or ($selection -gt $i)) {
             Write-Error "Invalid selection. Expected a number 0-$i."
             continue groupActions
           } else {
             Get-Group -Names ($table.Rows[$selection - 1]['NAME'])
-            break groupActions
+            break rewrite
           }
         }
-        break actionLoop
+        break rewrite
       } 'Add groups' {
         Write-Host ''
         Write-Host ('***You may add multiple groups by separating them with ' `
-            + "a comma (no space).***`n")
-        $groups = (Read-Host 'Groups to add') -split ','
+            + "a comma.***`n")
+        $groups = ((Read-Host 'Groups to add') -split ',').Trim()
         foreach ($group in $groups) {
           if ($ILLEGAL_GROUPS -contains $group) {
             Write-Error ("Skipping ""$group"". Modifying this group is " `
@@ -1719,12 +1716,12 @@ function Get-User {
           }
         }
         Write-Host ''
-        continue actionLoop
+        break rewrite
       } 'Remove groups' {
         Write-Host ''
         Write-Host ('***You may remove multiple groups by separating them with ' `
-            + "a comma (no space).***`n")
-        $groups = (Read-Host 'Groups to remove') -split ','
+            + "a comma.***`n")
+        $groups = ((Read-Host 'Groups to remove') -split ',').Trim()
         foreach ($group in $groups) {
           if ($ILLEGAL_GROUPS -contains $group) {
             Write-Error ("Skipping ""$group"". Modifying this group is " `
@@ -1734,20 +1731,24 @@ function Get-User {
           }
         }
         Write-Host ''
-        continue actionLoop
+        [Console]::CursorVisible = $false
+        break rewrite
       } 'Search manager' {
+        Write-Host ''
         Get-User -Names (($user.Manager) -split ',')[0].Substring(3)
-        break actionLoop
+        break rewrite
       } 'Send email' {
         Start-Process "mailto:$($user.EmailAddress)"
-        continue actionLoop
+        Write-Host ''
+        break rewrite
       } default {
         Write-Host ''
-        Write-Error 'Undefined action.'
-        continue actionLoop
+        Write-Error 'Unrecognized action.'
+        break rewrite
       }
     }
   }
+  [Console]::CursorVisible = $true
 }
 
 function Get-UserSummary {
