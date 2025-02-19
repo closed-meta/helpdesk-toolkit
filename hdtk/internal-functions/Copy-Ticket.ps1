@@ -9,14 +9,14 @@ param (
 )
 
 if ($Subject) {
-  Read-Host 'Press <enter> to copy the ticket subject'
+  $quiet = Read-Host 'Press <enter> to copy the ticket subject'
   Set-Clipboard $Subject
 }
 if ($Body) {
-  Read-Host 'Press <enter> to copy the ticket body'
+  $quiet = Read-Host 'Press <enter> to copy the ticket body'
   Set-Clipboard $Body
 }
 if ($Fulfillment) {
-  Read-Host 'Press <enter> to copy the ticket fulfillment comment'
+  $quiet = Read-Host 'Press <enter> to copy the ticket fulfillment comment'
   Set-Clipboard $Fulfillment
 }
