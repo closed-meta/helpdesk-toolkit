@@ -78,6 +78,7 @@ foreach ($object in $Objects) {
 
 # Displays options to user and requests a selection from the results.
 Out-String -InputObject ($table | Format-Table -Wrap) | Write-Host
+[Console]::CursorTop = [Console]::CursorTop - 2
 $selection = $null
 $selection = Read-Host "[0] Return  [1-$i] Make selection"
 if (-not $selection) {
