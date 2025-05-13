@@ -562,12 +562,24 @@ function Format-Quote {
 
       Assumes that the text is the in the Outlook-style format (see below).
 
-      > From: sender@example.com
+      > From: Sender Name <sender-name@example.com>
       > Sent: Thursday, January 1st, 1970 12:01 AM
-      > To: recipient@example.com
+      > To: Recipient Name <recipient-name@example.com>
       > Subject: Lorem Ipsum
       > 
-      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+    .PARAMETER Concise
+      Represents that certain header information should be reformatted to be more concise. For example--in the to, from, CC and BCC headers--email address written in the "First Last <first-last@example.com>" format will be rewritten in the more basic "first-last@example.com" format instead.
+
+      Assumes that the text is the in the Outlook-style format (see below).
+
+      > From: Sender Name <sender-name@example.com>
+      > Sent: Thursday, January 1st, 1970 12:01 AM
+      > To: Recipient Name <recipient-name@example.com>
+      > Subject: Lorem Ipsum
+      > 
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
     .EXAMPLE
       Format-Quote "Paragraph 1`n`nParagraph 2"
@@ -618,15 +630,21 @@ function Format-Quote {
 
     [int]$Level = 1,
 
-    [switch]$Email
+    [switch]$Email,
+
+    [switch]$Concise
   )
+
+  if ((-not $Email) -and $Concise) {
+    throw 'The Concise switch cannot be used without the Email switch.'
+  }
 
   $lines = @()
   if (Test-Path -Path $Text) {
     $lines = Get-Content -Path $Text -Encoding 'utf8'
   } elseif (Test-Path -Path $Text -IsValid) {
-    Write-Error "Unable to locate a file at the address provided to the Text " `
-        + "parameter (""$Text""). "
+    Write-Error ("Unable to locate a text file at the address " `
+        + "provided to the Text parameter (""$Text""). ")
     $lines = $Text -split "`n"
   } else {
     $lines = $Text -split "`n"
@@ -650,6 +668,15 @@ function Format-Quote {
       $inBody = $true
     }
     if ($inHeaders) {
+      $title = ($line -split ': ')[0]
+      if ($Concise -and ($title -in @('To', 'From', 'CC', 'BCC'))) {
+        $emails = $line.Remove(0, ($title.Length + 2)) -split '; '
+        $emails = $emails.ForEach({
+          $_ -replace '.*<([^>]+)>.*', '$1'
+        })
+        $emails = $emails -join '; '
+        $line = "$title`: $emails"
+      }
       $Text += "$line`n"
     } elseif ($inBody) {
       $Text += "$prefix$line`n"
