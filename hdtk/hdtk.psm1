@@ -61,16 +61,6 @@ foreach ($child in $children) {
 }
 Remove-Variable -Name 'children'
 
-function Access-CopyPastes {
-  <#
-    .SYNOPSIS
-      Opens the directory containing the copy-paste documents that the copy-paste variables are built from.
-  #>
-
-  $path = [System.IO.Path]::Combine($PSScriptRoot, 'copypastes')
-  Invoke-Item $path
-}
-
 function Copy-AccountUnlockTicket {
   <#
     .SYNOPSIS
@@ -1825,6 +1815,16 @@ function Get-UserSummary {
   return $summary
 }
 
+function Open-CopypastesDirectory {
+  <#
+    .SYNOPSIS
+      Opens the directory containing the copy-paste documents that the copy-paste variables are built from.
+  #>
+
+  $path = [System.IO.Path]::Combine($PSScriptRoot, 'copypastes')
+  Invoke-Item $path
+}
+
 function Reformat-Names {
   <#
     .SYNOPSIS
@@ -2031,7 +2031,7 @@ function Reset-Password {
 function Set-CopyPastes {
   <#
     .SYNOPSIS
-      Generates various global string variables in PowerShell representing copy-pastes built using the copy-paste documents (determines the name and content of the variable) (see Access-CopyPastes) and variable substitution (see Insert-Variables.ps1).
+      Generates various global string variables in PowerShell representing copy-pastes built using the copy-paste documents (determines the name and content of the variable) (see Open-CopypastesDirectory) and variable substitution (see Insert-Variables.ps1).
   #>
 
   $scope = 'Global'
