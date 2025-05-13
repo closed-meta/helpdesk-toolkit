@@ -912,6 +912,100 @@ function Get-Computer {
   }
 }
 
+function Get-ExclusiveGroups {
+  <#
+    .SYNOPSIS
+      Allows you to get the names of every group that one user in Active Directory is a member of that another is not a member of. Includes an optional Filter paramter that can be used to further filter the groups returned.
+
+    .PARAMETER User
+      Represents the account to compare the group memberships of Reference against. The argument for the User parameter may either be an [ADUser object] (such as those returned by Get-ADUser) or a string representing an identifier for an account in Active Directory (corresponds with the identifiers accepted by [Get-ADUser's Identity parameter]).
+
+      [ADUser object]: https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.aduser
+
+      [Get-ADUser's Identity parameter]: https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-aduser#-identity
+
+    .PARAMETER Reference
+      Represents the account to compare User's group memberships against. The argument for the Reference parameter may either be an [ADUser object] (such as those returned by Get-ADUser) or a string representing an identifier for an account in Active Directory (corresponds with the identifiers accepted by [Get-ADUser's Identity parameter]).
+
+      [ADUser object]: https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.aduser
+
+      [Get-ADUser's Identity parameter]: https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-aduser#-identity
+
+    .PARAMETER Filter
+      Represents the [wilcard expression] to filter out the groups returned. Only groups with names matching this wilcard expression will be returned.
+
+      [wilcard expression]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_wildcards
+
+    .EXAMPLE
+      Get-ExclusiveGroups -User 'JD012345' -Reference '0012345'
+
+      Returns the names of all groups that 0012345 is a member of in Active Directory that JD012345 is not.
+
+    .EXAMPLE
+      Get-ExclusiveGroups 'JD012345' '0012345' -Filter 'Citrix*'
+
+      Returns the names of all groups starting with "Citrix" that 0012345 is a member of in Active Directory that JD012345 is not.
+
+    .EXAMPLE
+      Get-ExclusiveGroups 'JD012345' '0012345' '*Microsoft*'
+
+      Returns the names of all groups containing "Microsoft" that 0012345 is a member of in Active Directory that JD012345 is not.
+  #>
+
+  [CmdletBinding()]
+
+  param (
+    [Parameter(Mandatory=$true, Position=0)]
+    [object]$User,
+
+    [Alias('ref')]
+    [Parameter(Mandatory=$true, Position=1)]
+    [object]$Reference,
+
+    [Parameter(Position=2)]
+    [SupportsWildcards()]
+    [string]$Filter = '*'
+  )
+
+  if ($User.GetType().Name -eq 'String') {
+    try {
+      $User = Get-ADUser $User
+    } catch {
+      throw $_
+    }
+  } elseif ($User.GetType().Name -ne 'ADUser') {
+    Write-Error """$($User.GetType().Name)"" is not an acceptable type for the User parameter. Argument must be either an ADUser object or a string identifying an ADUser object (correspond's with Get-ADUser's Identity parameter)."
+    return
+  }
+
+  if ($Reference.GetType().Name -eq 'String') {
+    try {
+      $Reference = Get-ADUser $Reference
+    } catch {
+      throw $_
+    }
+  } elseif ($Reference.GetType().Name -ne 'ADUser') {
+    Write-Error """$($Reference.GetType().Name)"" is not an acceptable type for the Reference parameter. Argument must be either an ADUser object or a string identifying an ADUser object (correspond's with Get-ADUser's Identity parameter)."
+    return
+  }
+
+  $userGroups = Get-ADPrincipalGroupMembership `
+      -Identity $User.SamAccountName | Get-ADGroup -Properties 'Name' `
+      | Select-Object -ExpandProperty 'Name'
+  $referenceGroups = Get-ADPrincipalGroupMembership `
+      -Identity $Reference.SamAccountName | Get-ADGroup -Properties 'Name' `
+      | Select-Object -ExpandProperty 'Name'
+
+  $exclusives = @()
+  foreach ($group in $referenceGroups) {
+    if (($userGroups -notcontains $group) -and ($group -like $Filter)) {
+      $exclusives += $group
+    }
+  }
+
+  return $exclusives | Sort-Object
+}
+
 function Get-Group {
   <#
     .SYNOPSIS
