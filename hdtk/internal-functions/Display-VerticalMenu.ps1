@@ -25,23 +25,29 @@ param (
   # Draws actions menu.
   [Console]::SetCursorPosition(0, $MenuStart)
   for ($i = 0; $i -lt $Options.Length; $i += 1) {
-      if ($i -eq $Index) {
-        Write-Host "[$($Options[$i])]" `
-            -NoNewLine `
-            -ForegroundColor ([Console]::BackgroundColor).ToString() `
-            -BackgroundColor ([Console]::ForegroundColor).ToString()
-      } else {
-        Write-Host " $($Options[$i]) " -NoNewLine
-      }
+    if ($i -eq $Index) {
+      Write-Host "[$($Options[$i])]" `
+          -NoNewLine `
+          -ForegroundColor ([Console]::BackgroundColor).ToString() `
+          -BackgroundColor ([Console]::ForegroundColor).ToString()
+    } else {
+      Write-Host " $($Options[$i]) " -NoNewLine
+    }
   }
+
+  # Moves console cursor back to the start of the menu.
+  [Console]::CursorTop -= [Math]::Floor((($Options.ForEach({ " $_ " }) -join '').Length) / [Console]::WindowWidth)
+  [Console]::CursorLeft = 0
 
   # Handles keyboard input.
   $key = [Console]::ReadKey($true)
   switch ($key.Key) {
     'Escape' {
+      [Console]::CursorTop += [Math]::Floor((($Options.ForEach({ " $_ " }) -join '').Length) / [Console]::WindowWidth)
       [Console]::CursorVisible = $true
       break menu
     } 'Enter' {
+      [Console]::CursorTop += [Math]::Floor((($Options.ForEach({ " $_ " }) -join '').Length) / [Console]::WindowWidth)
       [Console]::CursorVisible = $true
       return $Index
     } 'LeftArrow' {
