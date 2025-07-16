@@ -496,10 +496,46 @@ function Copy-PinFolderTicket {
   Copy-Ticket @parameters
 }
 
+function Format-Email {
+  <#
+    .SYNOPSIS
+      Reformats plaintext emails. Equivalent to running `Format-Quote -Concise -Email`.
+
+      ALIAS: fem
+
+    .PARAMETER Text
+      Represents either the input text itself or the path to a text file containing the input string. If an invalid path is provided, the string will be treated as the input text itself. By default, this parameter is set to a text.txt file on your Desktop folder.
+
+    .EXAMPLE
+      Format-Email
+
+      Would return the below:
+
+      From: sender-name@example.com
+      Sent: 1970-01-31, 00:01
+      To: recipient-name@example.com
+      Subject: Lorem Ipsum
+      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+  #>
+
+  [Alias('fem')]
+  [CmdletBinding()]
+
+  param (
+    [Parameter(
+      Position=0,
+      ValueFromPipeline=$true
+    )]
+    [string]$Text = [System.IO.Path]::Combine($HOME, 'Desktop', 'text.txt')
+  )
+
+  return Format-Quote -Text $Text -Email -Concise
+}
+
 function Format-Quote {
   <#
     .SYNOPSIS
-      Prefixes every line of the provided string with a Markdown blockquote indicator ("> "). The level of blockquote nesting for the text may be specified with the Level parameter; and, to add blockquote syntax to a copied (Outlook-style) email containing a block of headers and a new line before the actual text, you may use the Email parameter.
+      Prefixes every line of the provided string with a Markdown blockquote indicator ("> "). To add blockquote syntax to a copied (Outlook-style) email containing a block of headers and a new line before the actual text, you may use the Email parameter.
 
       ALIAS: quote
 
