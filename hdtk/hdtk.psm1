@@ -680,15 +680,15 @@ function Format-Quote {
 function Get-Computer {
   <#
     .SYNOPSIS
-      Allows you to search for computers in Active Directory by Name. At least one argument must match the value of the corresponding property of a computer for it to be considered a match.
+      Allows you to search for computers in Active Directory by name.
 
       ALIAS: gcom
 
     .PARAMETER Names
-      Represents the name(s) to search computers in Active Directory for. If used, at least one of the arguments passed must match a computer's name for the computer to be considered a match.
+      Represents the computer name(s) to search Active Directory for. If used, at least one of the arguments passed must match a computer's name for the computer to be considered a match.
 
     .PARAMETER Properties
-      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second one is called "CanonName" and its value represents the canonical name of the property in Active Directory.
+      Represents an array of dictionaries (hashtables), each containing two key-value pairs. (1) The first is called "Title" and its value represents the string that will be used as the displayed name of the property in the property list. (2) The second key-value pair is called "CanonName" and its value represents the canonical name of the property in Active Directory.
 
     .PARAMETER DisableActions
       Instructs the function to end after displaying the properties of the user instead of providing the user with follow-up actions.
