@@ -506,21 +506,6 @@ function Format-Quote {
     .PARAMETER Text
       Represents either the input text itself or the path to a text file containing the input string. If an invalid path is provided, the string will be treated as the input text itself.
 
-    .PARAMETER Level
-      Represents the level of nesting for the blockquote. For example, one level of nesting would look like...
-
-      > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-      > 
-      > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-      ... and two levels of nesting would look like...
-
-      > > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-      > > 
-      > > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-      ... and so on.
-
     .PARAMETER Email
       Represents that the input text should not include the block of email headers as part of the blockquote, and that the blank line separating the block of headers of the blockquote should be removed.
 
@@ -569,12 +554,12 @@ function Format-Quote {
       > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
     .EXAMPLE
-      Format-Quote -Email
+      Format-Quote -Email -Concise
 
       Would return the below:
 
       From: sender@example.com
-      Sent: Thursday, January 1st, 1970 12:01 AM
+      Sent: 1970-01-31, 00:01
       To: recipient@example.com
       Subject: Lorem Ipsum
       > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
