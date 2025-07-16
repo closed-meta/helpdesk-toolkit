@@ -582,39 +582,33 @@ function Format-Quote {
       > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
   #>
 
-  [Alias('quote')]
+  [Alias('fqt')]
+  [CmdletBinding()]
 
   param (
-
     [Parameter(
       Position=0,
       ValueFromPipeline=$true
     )]
     [string]$Text = [System.IO.Path]::Combine($HOME, 'Desktop', 'text.txt'),
 
-    [int]$Level = 1,
+    [switch]$Concise,
 
-    [switch]$Email,
-
-    [switch]$Concise
+    [switch]$Email
   )
-
-  if ((-not $Email) -and $Concise) {
-    throw 'The Concise switch cannot be used without the Email switch.'
-  }
 
   $lines = @()
   if (Test-Path -Path $Text) {
     $lines = Get-Content -Path $Text -Encoding 'utf8'
   } elseif (Test-Path -Path $Text -IsValid) {
-    Write-Error ("Unable to locate a text file at the address " `
-        + "provided to the Text parameter (""$Text""). ")
+    Write-Error "Unable to locate a text file at the address " `
+        + "provided to the Text parameter (""$Text""). "
     $lines = $Text -split "`n"
   } else {
     $lines = $Text -split "`n"
   }
   $Text = ''
-  $prefix = '> ' * $Level
+  $prefix = '> '
   $inHeaders = $true
   $inBody = $true
   if ($Email) {
@@ -632,14 +626,26 @@ function Format-Quote {
       $inBody = $true
     }
     if ($inHeaders) {
+      if ((-not $Email) -and $Concise) {
+        throw 'The Concise switch cannot be used without the Email switch.'
+      }
       $title = ($line -split ': ')[0]
-      if ($Concise -and ($title -in @('To', 'From', 'CC', 'BCC'))) {
-        $emails = $line.Remove(0, ($title.Length + 2)) -split '; '
-        $emails = $emails.ForEach({
-          $_ -replace '.*<([^>]+)>.*', '$1'
-        })
-        $emails = $emails -join '; '
-        $line = "$title`: $emails"
+      if ($Concise) {
+        if ($title -in @('To', 'From', 'CC', 'BCC')) {
+          $emails = $line.Remove(0, ($title.Length + 2)) -split '; '
+          $emails = $emails.ForEach({
+            $_ -replace '.*<([^>]+)>.*', '$1'
+          })
+          $emails = $emails -join '; '
+          $line = "$title`: $emails"
+        } elseif ($title -eq 'Sent') {
+          try {
+            $date = $line.Remove(0, ($title.Length + 2))
+            $date = [DateTime]::Parse($date)
+            $date = $date.ToString('yyyy-MM-dd, HH:mm')
+            $line = "$title`: $date"
+          } catch {}
+        }
       }
       $Text += "$line`n"
     } elseif ($inBody) {
