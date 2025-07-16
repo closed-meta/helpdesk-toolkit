@@ -2043,53 +2043,53 @@ function Set-CopyPastes {
 function Update-GroupMemberships {
   <#
     .SYNOPSIS
-      Allows you to add/remove one or more users to/from one or more groups in Active Directory.
+      Allows you to add/remove user(s) to/from group(s) in Active Directory.
 
-      ALIAS: update
-
-    .PARAMETER GroupNames
-      Represents the name(s) of the groups you would like to add/remove the users to/from.
-
-      ALIAS: groups
+      ALIAS: udg
 
     .PARAMETER Usernames
       Represents the username(s) of the users you would like to add/remove to/from the group(s).
 
       ALIAS: users
 
+    .PARAMETER GroupNames
+      Represents the name(s) of the groups you would like to add/remove the users to/from.
+
+      ALIAS: groups
+
     .PARAMETER Add
-      Signals that the function should add the specified users to the specified groups.
+      Signals that the function should add the users to the groups.
 
     .PARAMETER Remove
-      Signals that the function should remove the specified users from the specified groups.
+      Signals that the function should remove the users from the groups.
 
     .EXAMPLE
-      Update-GroupMemberships -GroupNames 'GROUP_1', 'GROUP_2' -Usernames 'USER_1', 'USER_2' -Add
+      Update-GroupMemberships -Usernames 'USER_1', 'USER_2' -GroupNames 'GROUP_1', 'GROUP_2' -Add
 
       Adds the users with the usernames "USER_1" and "USER_2" to the groups named "GROUP_1" and "GROUP_2".
 
     .EXAMPLE
-      Update-GroupMemberships -GroupNames 'GROUP_1', 'GROUP_2' -Usernames 'USER_1', 'USER_2' -Remove
+      Update-GroupMemberships -Usernames 'USER_1', 'USER_2' -GroupNames 'GROUP_1', 'GROUP_2' -Remove
 
       Removes the users with the usernames "USER_1" and "USER_2" from the groups named "GROUP_1" and "GROUP_2".
 
     .EXAMPLE
-      Update-GroupMemberships -groups 'GROUP_1', 'GROUP_2' -users 'USER_1', 'USER_2' -Add
+      udg -users 'USER_1', 'USER_2' -groups 'GROUP_1', 'GROUP_2' -add
 
       Adds the users with the usernames "USER_1" and "USER_2" to the groups named "GROUP_1" and "GROUP_2".
   #>
 
-  [Alias('update')]
+  [Alias('udg')]
   [CmdletBinding()]
 
   param (
-    [Alias('groups')]
-    [Parameter(Position=0)]
-    [string[]]$GroupNames,
-
     [Alias('users')]
-    [Parameter(Position=1)]
+    [Parameter(Mandatory=$true, Position=0)]
     [string[]]$Usernames,
+
+    [Alias('groups')]
+    [Parameter(Mandatory=$true, Position=1)]
+    [string[]]$GroupNames,
 
     [switch]$Add,
 
@@ -2097,57 +2097,96 @@ function Update-GroupMemberships {
   )
 
   if (-not ($Add -or $Remove)) {
-    Write-Error 'You must specify whether this is to add members or remove ' `
-        + 'members using the Add and Remove switches.'
-    return
+    $selection = Read-Host '[1] Add  [2] Remove'
+    if (-not $selection) {
+      throw 'Invalid selection.'
+    }
+    try {
+      $selection = [int]$selection
+    } catch {
+      throw "Invalid selection. Expected a number 1-2."
+    }
+    if ($selection -eq 1) {
+      $Add = $true
+    } elseif ($selection -eq 2) {
+      $Remove = $true
+    } else {
+      throw "Invalid selection. Expected a number 1-2."
+    }
   } elseif ($Add -and $Remove) {
-    Write-Error 'You cannot use the Add and Remove switches simultaneously.'
-    return
+    throw 'You cannot use the Add and Remove switches simultaneously.'
   }
 
   $groups = $GroupNames.ForEach({
-    if ($ILLEGAL_GROUPS -contains $_) {
-      Write-Error ('Skipping group ("' + $_ + '"). Modifying this group is ' `
-          + 'restricted by Data Security.')
-      continue
-    }
     $results = Get-ADGroup `
-        -Filter "(SamAccountName -eq ""$_"") -or (Name -eq ""$_"")" `
-        -Properties 'ObjectGUID', 'SamAccountName'
+        -Filter "(SAMAccountName -eq ""$_"") -or (Name -eq ""$_"")" `
+        -Properties 'ObjectGUID', 'SAMAccountName', 'Name'
     if ($results) {
       if ($results.Count -gt 1) {
-        Write-Error 'Skipping group ("' + $_ `
-            + '"). Multiple groups found with this name.'
+        Write-Host ''
+        Write-Error "Skipping group (""$_""). Multiple groups found."
       } else {
         $results
       }
     } else {
-      Write-Error "Skipping group (""$_""). No groups found with this name."
+      Write-Host ''
+      Write-Error "Skipping group (""$_""). No groups found."
     }
   })
   $users = $Usernames.ForEach({
-    $results = Get-ADUser $_ -Properties 'ObjectGUID', 'SamAccountName'
+    $results = Get-ADUser $_ -Properties 'ObjectGUID', 'SAMAccountName', 'Name'
     if ($results) {
-      $results
+      if ($results.Count -gt 1) {
+        Write-Host ''
+        Write-Error "Skipping user (""$_""). Multiple users found."
+      } else {
+        $results
+      }
     } else {
-      Write-Error "Skipping user (""$_""). No users found with this username."
+      Write-Host ''
+      Write-Error "Skipping user (""$_""). No users found."
     }
   })
 
   if (-not $groups) {
-    Write-Error 'No groups found.'
-    return
+    throw 'No groups found.'
   }
   if (-not $users) {
-    Write-Error 'No users found.'
-    return
+    throw 'No users found.'
   }
 
   foreach ($group in $groups) {
+    $groupName = $group.SAMAccountName
     if ($Add) {
-      Add-ADGroupMember -Identity $group.ObjectGUID -Members $users
+      if ($ILLEGAL_GROUPS -contains $group.SAMAccountName) {
+        Write-Host ''
+        $selection = Read-Host ("[Y/N] Are you sure you want to add these " `
+            + "users to the ""$groupName"" group? This group is typically " `
+            + "restricted by Data Security.")
+        if (($selection -ieq 'y') -or ($selection -ieq 'yes')) {
+          Write-Host 'Confirmation approved.' -ForegroundColor 'Green'
+          Add-ADGroupMember -Identity $group.ObjectGUID -Members $users -Confirm:$false
+        } else {
+          Write-Host 'Confirmation denied.' -ForegroundColor 'Red'
+        }
+      } else {
+        Add-ADGroupMember -Identity $group.ObjectGUID -Members $users -Confirm:$false
+      }
     } elseif ($Remove) {
-      Remove-ADGroupMember -Identity $group.ObjectGUID -Members $users
+      if ($ILLEGAL_GROUPS -contains $group.SAMAccountName) {
+        Write-Host ''
+        $selection = Read-Host ("[Y/N] Are you sure you want to remove " `
+            + "these users from the ""$groupName"" group? This group is " `
+            + "typically restricted by Data Security.")
+        if (($selection -ieq 'y') -or ($selection -ieq 'yes')) {
+          Write-Host 'Confirmation approved.' -ForegroundColor 'Green'
+          Remove-ADGroupMember -Identity $group.ObjectGUID -Members $users -Confirm:$false
+        } else {
+          Write-Host 'Confirmation denied.' -ForegroundColor 'Red'
+        }
+      } else {
+        Remove-ADGroupMember -Identity $group.ObjectGUID -Members $users -Confirm:$false
+      }
     }
   }
 }
