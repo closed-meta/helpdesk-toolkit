@@ -46,20 +46,10 @@
 
 $ILLEGAL_GROUPS = @()
 
-<# Generates a dictionary with an entry for each PowerShell 
-   script in the "internal-functions" directory, deriving 
-   each entry's key from the name of the corresponding 
-   script, and the entry's value being the script's path. #>
-$children = [System.IO.Path]::Combine(
-  $PSScriptRoot,
-  'internal-functions',
-  '*.ps1'
-) | Get-ChildItem
-$internal = @{}
-foreach ($child in $children) {
-  $internal[$child.BaseName] = $child.FullName
-}
-Remove-Variable -Name 'children'
+<# Imports all of the functions defined in internal-functions.ps1. 
+   These functions are defined there as they are only intended 
+   as internal/private functions. #>
+. "$([System.IO.Path]::Combine($PSScriptRoot, 'internal-functions.ps1'))"
 
 function Copy-AccountUnlockTicket {
   <#
@@ -162,7 +152,7 @@ function Copy-AccountUnlockTicket {
   if (-not $DisableFulfillmentCopy) {
     $parameters['Fulfillment'] = $fulfillment
   }
-  & $internal['Copy-Ticket'] @parameters
+  Copy-Ticket @parameters
 }
 
 function Copy-ConnectPrinterTicket {
@@ -277,7 +267,7 @@ function Copy-ConnectPrinterTicket {
   if (-not $DisableFulfillmentCopy) {
     $parameters['Fulfillment'] = $fulfillment
   }
-  & $internal['Copy-Ticket'] @parameters
+  Copy-Ticket @parameters
 }
 
 function Copy-MapDriveTicket {
@@ -414,7 +404,7 @@ function Copy-MapDriveTicket {
   if (-not $DisableFulfillmentCopy) {
     $parameters['Fulfillment'] = $fulfillment
   }
-  & $internal['Copy-Ticket'] @parameters
+  Copy-Ticket @parameters
 }
 
 function Copy-PinFolderTicket {
@@ -529,7 +519,7 @@ function Copy-PinFolderTicket {
   if (-not $DisableFulfillmentCopy) {
     $parameters['Fulfillment'] = $fulfillment
   }
-  & $internal['Copy-Ticket'] @parameters
+  Copy-Ticket @parameters
 }
 
 function Format-Quote {
@@ -754,12 +744,12 @@ function Get-Computer {
     Literal = $Literal
   }
 
-  $domainObjects = & $internal['Search-Objects'] @searchArguments
+  $domainObjects = Search-Objects @searchArguments
   if (-not $domainObjects) {
     Write-Error 'No computers found.'
     return
   }
-  $computer = & $internal['Select-ObjectFromTable'] `
+  $computer = Select-ObjectFromTable `
       -Objects $domainObjects `
       -Properties $selectProperties
   [Console]::CursorVisible = $false
@@ -849,7 +839,7 @@ function Get-Computer {
 
     # Displays actions menu.
     Write-Host '# ACTIONS #'
-    $selection = & $internal['Display-VerticalMenu'] -Options $actions
+    $selection = Display-VerticalMenu -Options $actions
     Write-Host ''
     if ($selection -eq $null) {
       $selection = 'End'
@@ -1158,12 +1148,12 @@ function Get-Group {
     Literal = $Literal
   }
 
-  $domainObjects = & $internal['Search-Objects'] @searchArguments
+  $domainObjects = Search-Objects @searchArguments
   if (-not $domainObjects) {
     Write-Error 'No groups found.'
     return
   }
-  $group = & $internal['Select-ObjectFromTable'] `
+  $group = Select-ObjectFromTable `
       -Objects $domainObjects `
       -Properties $selectProperties
   [Console]::CursorVisible = $false
@@ -1261,7 +1251,7 @@ function Get-Group {
 
     # Displays actions menu.
     Write-Host '# ACTIONS #'
-    $selection = & $internal['Display-VerticalMenu'] -Options $actions
+    $selection = Display-VerticalMenu -Options $actions
     Write-Host ''
     if ($selection -eq $null) {
       $selection = 'End'
@@ -1276,8 +1266,8 @@ function Get-Group {
         break rewrite
       } 'Return to search' {
         Write-Host ''
-        $group = & $internal['Select-ObjectFromTable'] `
-            -Objects (& $internal['Search-Objects'] @searchArguments) `
+        $group = Select-ObjectFromTable `
+            -Objects (Search-Objects @searchArguments) `
             -Properties $selectProperties
         Get-Group $group.SamAccountName
         break rewrite
@@ -1519,12 +1509,12 @@ function Get-User {
     Literal = $Literal
   }
 
-  $domainObjects = & $internal['Search-Objects'] @searchArguments
+  $domainObjects = Search-Objects @searchArguments
   if (-not $domainObjects) {
     Write-Error 'No users found.'
     return
   }
-  $user = & $internal['Select-ObjectFromTable'] `
+  $user = Select-ObjectFromTable `
       -Objects $domainObjects `
       -Properties $selectProperties
   if (-not $user) {
@@ -1708,7 +1698,7 @@ function Get-User {
 
     # Displays actions menu.
     Write-Host '# ACTIONS #'
-    $selection = & $internal['Display-VerticalMenu'] -Options $actions
+    $selection = Display-VerticalMenu -Options $actions
     Write-Host ''
     if ($selection -eq $null) {
       $selection = 'End'
@@ -1734,8 +1724,8 @@ function Get-User {
         break rewrite
       } 'Return to search' {
         Write-Host ''
-        $group = & $internal['Select-ObjectFromTable'] `
-            -Objects (& $internal['Search-Objects'] @searchArguments) `
+        $group = Select-ObjectFromTable `
+            -Objects (Search-Objects @searchArguments) `
             -Properties $selectProperties
         Get-User $group.SamAccountName
         break rewrite
@@ -2033,7 +2023,7 @@ function Set-CopyPastes {
   for ($i = 0; $i -lt $numFiles; $i += 1) {
     New-Variable `
         -Name $names[$i] `
-        -Value (& $internal['Insert-Variables'] $contents[$i]) `
+        -Value (Insert-Variables $contents[$i]) `
         -Scope $scope `
         -Option 'ReadOnly'`
         -ErrorAction 'SilentlyContinue'
