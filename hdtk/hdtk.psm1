@@ -938,7 +938,11 @@ function Get-Computer {
 function Get-ExclusiveGroups {
   <#
     .SYNOPSIS
-      Allows you to get the names of every group that one user in Active Directory is a member of that another is not a member of. Includes an optional Filter paramter that can be used to further filter the groups returned.
+      Allows you to get the names of every group that one users in Active Directory is a member of that another is not a member of. Includes a optional Filter paramter that can be used to further filter the groups returned.
+
+      Returns a list of the name of each group the Reference account is a member of in Active Directory that the User account is not.
+
+      ALIAS: geg
 
     .PARAMETER User
       Represents the account to compare the group memberships of Reference against. The argument for the User parameter may either be an [ADUser object] (such as those returned by Get-ADUser) or a string representing an identifier for an account in Active Directory (corresponds with the identifiers accepted by [Get-ADUser's Identity parameter]).
@@ -948,14 +952,14 @@ function Get-ExclusiveGroups {
       [Get-ADUser's Identity parameter]: https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-aduser#-identity
 
     .PARAMETER Reference
-      Represents the account to compare User's group memberships against. The argument for the Reference parameter may either be an [ADUser object] (such as those returned by Get-ADUser) or a string representing an identifier for an account in Active Directory (corresponds with the identifiers accepted by [Get-ADUser's Identity parameter]).
+      Represents the account to compare User's group memberships against. The argument for the User parameter may either be an [ADUser object] (such as those returned by Get-ADUser) or a string representing an identifier for an account in Active Directory (corresponds with the identifiers accepted by [Get-ADUser's Identity parameter]).
 
       [ADUser object]: https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.aduser
 
       [Get-ADUser's Identity parameter]: https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-aduser#-identity
 
     .PARAMETER Filter
-      Represents the [wilcard expression] to filter out the groups returned. Only groups with names matching this wilcard expression will be returned.
+      Represents the [wilcard expression] to filter out the groups returned. Only groups with names matching this wilcard expression will be returned. By default, none of the results are filtered out.
 
       [wilcard expression]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_wildcards
 
@@ -975,6 +979,7 @@ function Get-ExclusiveGroups {
       Returns the names of all groups containing "Microsoft" that 0012345 is a member of in Active Directory that JD012345 is not.
   #>
 
+  [Alias('geg')]
   [CmdletBinding()]
 
   param (
@@ -990,34 +995,33 @@ function Get-ExclusiveGroups {
     [string]$Filter = '*'
   )
 
-  if ($User.GetType().Name -eq 'String') {
+  $type = $User.GetType().Name
+  if (($type -eq 'String') -or ($type -like 'Int*')) {
     try {
-      $User = Get-ADUser $User
+      $User = Get-ADUser $User -Properties 'MemberOf', 'PrimaryGroup'
     } catch {
       throw $_
     }
   } elseif ($User.GetType().Name -ne 'ADUser') {
-    Write-Error """$($User.GetType().Name)"" is not an acceptable type for the User parameter. Argument must be either an ADUser object or a string identifying an ADUser object (correspond's with Get-ADUser's Identity parameter)."
-    return
+    throw """$($User.GetType().Name)"" is not an acceptable type for the User parameter. Argument must be either an ADUser object or a string identifying an ADUser object (correspond's with Get-ADUser's Identity parameter)."
   }
 
-  if ($Reference.GetType().Name -eq 'String') {
+  $type = $Reference.GetType().Name
+  if (($type -eq 'String') -or ($type -like 'Int*')) {
     try {
-      $Reference = Get-ADUser $Reference
+      $Reference = Get-ADUser $Reference -Properties 'MemberOf', 'PrimaryGroup'
     } catch {
       throw $_
     }
   } elseif ($Reference.GetType().Name -ne 'ADUser') {
-    Write-Error """$($Reference.GetType().Name)"" is not an acceptable type for the Reference parameter. Argument must be either an ADUser object or a string identifying an ADUser object (correspond's with Get-ADUser's Identity parameter)."
-    return
+    throw """$($Reference.GetType().Name)"" is not an acceptable type for the Reference parameter. Argument must be either an ADUser object or a string identifying an ADUser object (correspond's with Get-ADUser's Identity parameter)."
   }
 
-  $userGroups = Get-ADPrincipalGroupMembership `
-      -Identity $User.SamAccountName | Get-ADGroup -Properties 'Name' `
-      | Select-Object -ExpandProperty 'Name'
-  $referenceGroups = Get-ADPrincipalGroupMembership `
-      -Identity $Reference.SamAccountName | Get-ADGroup -Properties 'Name' `
-      | Select-Object -ExpandProperty 'Name'
+  $userGroups = $User.MemberOf + $User.PrimaryGroup
+  $userGroups = $userGroups.ForEach({ $_.Split(',')[0].Substring(3) })
+
+  $referenceGroups = $Reference.MemberOf + $Reference.PrimaryGroup
+  $referenceGroups = $referenceGroups.ForEach({ $_.Split(',')[0].Substring(3) })
 
   $exclusives = @()
   foreach ($group in $referenceGroups) {
