@@ -228,10 +228,9 @@ function Copy-ConnectPrinterTicket {
   )
 
   $i = 1
-  $footnotes = (
-    $Computers.ForEach({ "[$i]: ""$_"""; $i += 1 }) `
-        + $Printers.ForEach({ "[$i]: ""$_"""; $i += 1 })
-  ) -join "`n"
+  $footnotes = $Computers.ForEach({ "[$i]: ""$_"""; $i += 1 })
+  $footnotes += $Printers.ForEach({ "[$i]: ""$_"""; $i += 1 })
+  $footnotes = $footnotes -join "`n"
   $i = 1
   $references = @{
     Computers = $Computers.ForEach({ "[$i]"; $i += 1 }) -join ' '
