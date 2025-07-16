@@ -44,12 +44,21 @@
       - Switch parameters should be included at the end of the block.
 #>
 
-$ILLEGAL_GROUPS = @()
-
 <# Imports all of the functions defined in internal-functions.ps1. 
    These functions are defined there as they are only intended 
    as internal/private functions. #>
 . "$([System.IO.Path]::Combine($PSScriptRoot, 'internal-functions.ps1'))"
+
+$ILLEGAL_GROUPS = @()
+
+<# Creates a boolean representing whether or not the command-line interface 
+   running these commands supports interactions with cursor properties. #>
+$CursorSupport = $true
+try {
+  $quiet = [Console]::CursorTop
+} catch {
+  $CursorSupport = $false
+}
 
 function Copy-AccountUnlockTicket {
   <#
