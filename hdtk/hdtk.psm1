@@ -294,9 +294,6 @@ function Copy-MapDriveTicket {
 
       ALIAS: nocomment
 
-    .PARAMETER Remap
-      Signifies that you are re-mapping a drive that was somehow un-mapped as opposed to mapping the path to a drive for the first time on that computer.
-
     .EXAMPLE
       Copy-MapDriveTicket -Computers COMPUTER_1 -Paths PATH_1
 
@@ -336,9 +333,7 @@ function Copy-MapDriveTicket {
     [switch]$DisableSubjectCopy,
 
     [Alias('nocomment')]
-    [switch]$DisableFulfillmentCopy,
-
-    [switch]$Remap
+    [switch]$DisableFulfillmentCopy
   )
 
   $subject = ''
@@ -356,40 +351,20 @@ function Copy-MapDriveTicket {
     Computers = $Computers.ForEach({ "[$i]"; $i += 1 }) -join ' '
   }
 
-  if ($Remap) {
-    $subject = 're-map drive(s)'
-  } else {
-    $subject = 'map drive(s)'
-  }
+  $subject = 'map drive(s)'
 
   if ($Paths.Count -gt 1) {
     $body = "Customer requested to have drives $($references.Paths) "
-    if ($Remap) {
-      $fulfillment = "Re-mapped the paths $($references.Paths) to some drives for the "
-    } else {
-      $fulfillment = "Mapped the paths $($references.Paths) to some drives for the "
-    }
+    $fulfillment = "Mapped the paths $($references.Paths) to some drives for the "
   } else {
     $body = "Customer requested to have a drive $($references.Paths) "
-    if ($Remap) {
-      $fulfillment = "Re-mapped the path $($references.Paths) to a drive for the "
-    } else {
-      $fulfillment = "Mapped the path $($references.Paths) to a drive for the "
-    }
+    $fulfillment = "Mapped the path $($references.Paths) to a drive for the "
   }
   if ($Computers.Count -gt 1) {
-    if ($Remap) {
-      $body += "re-mapped for some computers $($references.Computers)."
-    } else {
-      $body += "mapped for some computers $($references.Computers)."
-    }
+    $body += "mapped for some computers $($references.Computers)."
     $fulfillment += "computers $($references.Computers)."
   } else {
-    if ($Remap) {
-      $body += "re-mapped for a computer $($references.Computers)."
-    } else {
-      $body += "mapped for a computer $($references.Computers)."
-    }
+    $body += "mapped for a computer $($references.Computers)."
     $fulfillment += "computer $($references.Computers)."
   }
   $body += "`n`n$footnotes"
