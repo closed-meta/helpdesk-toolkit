@@ -738,17 +738,24 @@ function Get-Computer {
     [switch]$Literal
   )
 
-  $searchFilters += @{
-    Arguments = $Names
-    Properties = @('Name')
+  <# If no search arguments are provided, then the function will try directly 
+     asking the user for a username to search Active Directory for. #>
+  if (-not $Names) {
+    Write-Host ''
+    $Names = Read-Host 'Computer name'
+    if (-not $Names) {
+      throw 'No search argument (Names) was given.'
+    }
   }
+
+  $filters += @{ Arguments = $Names; Properties = @('Name') }
   $selectProperties = @(
     @{ Header = '#' },
     @{ Header = 'NAME'; CanonName = 'Name' }
   )
 
   $searchArguments = @{
-    Filters = $searchFilters
+    Filters = $filters
     Type = 'computer'
     Properties = $Properties.ForEach({ $_['CanonName'] })
     Literal = $Literal
@@ -756,16 +763,14 @@ function Get-Computer {
 
   $domainObjects = Search-Objects @searchArguments
   if (-not $domainObjects) {
-    Write-Error 'No computers found.'
-    return
+    throw 'No computers found.'
   }
   $computer = Select-ObjectFromTable `
       -Objects $domainObjects `
-      -Properties $selectProperties
-  [Console]::CursorVisible = $false
+      -Properties $selectProperties `
+      -CursorSupport:$CursorSupport
   if (-not $computer) {
-    Write-Error 'No selection made.'
-    return
+    throw 'No selection returned.'
   }
 
   # Records computer's connection status ahead of time.
@@ -782,159 +787,150 @@ function Get-Computer {
     }
   }
 
-  :rewrite while ($true) {
-    # Clears the window.
+  # Clears the window.
+  if ($CursorSupport) {
     $start = [Console]::CursorStart + 1
     for ($i = $start; $i -le [Console]::WindowHeight; $i += 1) {
       Write-Host (' ' * [Console]::WindowWidth)
     }
     [Console]::SetCursorPosition(0, 0)
+  }
 
-    # Writes properties for user.
-    Write-Host '# INFORMATION #'
-    foreach ($property in $Properties) {
-      $canonName = $property['CanonName']
-      $displayName = $property['Title'].PadRight($maxLength)
-      $value = $computer.$canonName
-      if ($value -is [datetime]) {
+  # Writes properties for user.
+  Write-Host '# INFORMATION #'
+  foreach ($property in $Properties) {
+    $canonName = $property['CanonName']
+    $displayName = $property['Title'].PadRight($maxLength)
+    $value = $computer.$canonName
+    if ($value -is [datetime]) {
       $date = $value.ToString('yyyy-MM-dd, HH:mm:ss')
-      }
-      switch ($canonName) {
-        'LastLogonDate' {
+    }
+    switch ($canonName) {
+      'LastLogonDate' {
+        Write-Host "$displayName : $date"
+      } 'whenCreated' {
+        Write-Host "$displayName : $date"
+      } default {
+        if ($value -is [datetime]) {
           Write-Host "$displayName : $date"
-        } 'whenCreated' {
-          Write-Host "$displayName : $date"
-        } default {
-          if ($value -is [datetime]) {
-            Write-Host "$displayName : $date"
-          } else {
-            Write-Host "$displayName : $value"
-          }
+        } else {
+          Write-Host "$displayName : $value"
         }
       }
     }
-    $displayName = 'Connection'.PadRight($maxLength)
-    if ($connected) {
-      Write-Host "$displayName : online" -ForegroundColor 'green'
-    } else {
-      Write-Host "$displayName : offline" -ForegroundColor 'red'
-    }
+  }
+  $displayName = 'Connection'.PadRight($maxLength)
+  if ($connected) {
+    Write-Host "$displayName : online" -ForegroundColor 'Green'
+  } else {
+    Write-Host "$displayName : offline" -ForegroundColor 'Red'
+  }
+  Write-Host ''
 
-    if ($DisableActions) {
-      [Console]::CursorVisible = $true
-      break rewrite
-    }
+  if ($DisableActions) {
+    return
+  }
 
-    # Prepares the "actions" menu.
-    $actions = @(
-      'End',
-      'Reload'
-    )
-    if ($connected) {
-      $actions += 'Ping (until offline)'
-      if ($PSVersionTable.PSVersion.Major -ge 6) {
-        if ($IsWindows) {
-          $actions += 'Remote'
-        }
-      } else {
-        Write-Host ''
-        Write-Warning '"Remote" action only functional on Windows.'
+  # Prepares the "actions" menu.
+  $actions = @('End', 'Reload')
+  if ($connected) {
+    $actions += 'Ping (until offline)'
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+      if ($IsWindows) {
         $actions += 'Remote'
       }
-      $actions += 'Restart'
-      $actions += 'Power off'
     } else {
-      $actions += 'Ping (until online)'
+      Write-Host '"Remote" action only functional on Windows.' `
+          -ForegroundColor 'Yellow'
+      $actions += 'Remote'
     }
+    $actions += 'Restart'
+    $actions += 'Power off'
+  } else {
+    $actions += 'Ping (until online)'
+  }
 
-    # Displays actions menu.
-    Write-Host '# ACTIONS #'
-    $selection = Display-VerticalMenu -Options $actions
-    Write-Host ''
-    if ($selection -eq $null) {
-      $selection = 'End'
-    } else {
-      $selection = $actions[$selection]
-    }
+  # Displays actions menu.
+  Write-Host '# ACTIONS #'
+  $selection = Display-VerticalMenu `
+      -Options $actions `
+      -CursorSupport:$CursorSupport
+  Write-Host ''
+  if ($selection -eq $null) {
+    $selection = 'End'
+  } else {
+    $selection = $actions[$selection]
+  }
 
-    # Executes selection.
-    switch ($selection) {
-      'End' {
-        Write-Host ''
-        break rewrite
-      } 'Ping (until offline)' {
-        Write-Host "`n"
-        Write-Host '***Press <control>+<C> to escape.***' -ForegroundColor 'Red'
-        Write-Host ''
-        $passes = 0
-        while ($passes -lt 2) {
-          $connected = Test-Connection `
-              -ComputerName $computer.IPv4Address `
-              -Count 2 `
-              -Delay 3 `
-              -Quiet
-          $time = (Get-Date).ToString('HH:mm:ss')
-          if ($connected) {
-            Write-Host "[$time] Response received (online)." `
-                -ForegroundColor 'Green'
-          } else {
-            $passes += 1
-            Write-Host "[$time] No response received (offline)." `
-                -ForegroundColor 'Red'
-          }
+  # Executes selection.
+  switch ($selection) {
+    'End' {
+      Write-Host ''
+    } 'Ping (until offline)' {
+      Write-Host ''
+      Write-Host 'Press <control>+<C> to escape.' -ForegroundColor 'Cyan'
+      $passes = 0
+      while ($passes -lt 2) {
+        $connected = Test-Connection `
+            -ComputerName $computer.IPv4Address `
+            -Count 2 `
+            -Delay 3 `
+            -Quiet
+        $time = (Get-Date).ToString('HH:mm:ss')
+        if ($connected) {
+          Write-Host "[$time] Response received (online)." `
+              -ForegroundColor 'Green'
+        } else {
+          $passes += 1
+          Write-Host "[$time] No response received (offline)." `
+              -ForegroundColor 'Red'
         }
-        Get-Computer $computer.Name
-        break rewrite
-      } 'Ping (until online)' {
-        Write-Host "`n"
-        Write-Host '***Press <control>+<C> to escape.***' -ForegroundColor 'Red'
-        Write-Host ''
-        $passes = 0
-        while ($passes -lt 2) {
-          $connected = Test-Connection `
-              -ComputerName $computer.IPv4Address `
-              -Count 2 `
-              -Delay 3 `
-              -Quiet
-          $time = (Get-Date).ToString('HH:mm:ss')
-          if ($connected) {
-            $passes += 1
-            Write-Host "[$time] Response received (online)." `
-                -ForegroundColor 'Green'
-          } else {
-            Write-Host "[$time] No response received (offline)." `
-                -ForegroundColor 'Red'
-          }
-        }
-        Get-Computer $computer.Name
-        break rewrite
-      } 'Power off' {
-        Write-Host "`n"
-        Write-Host "Powering ""$($computer.Name)"" off..."
-        Stop-Computer -ComputerName $computer.IPv4Address -Force
-        continue rewrite
-      } 'Reload' {
-        Get-Computer $computer.Name
-        break rewrite
-      } 'Remote' {
-        Set-Clipboard -Value $($computer.Name)
-        Write-Host "`n"
-        Write-Host 'Copied...'
-        Write-Host $($computer.Name) -ForegroundColor 'Green'
-        Write-Host ''
-        Write-Host "Connecting to ""$($computer.Name)""..."
-        & 'msra.exe' '/offerra' $computer.IPv4Address
-        continue rewrite
-      } 'Restart' {
-        Write-Host "`n"
-        Write-Host "Restarting ""$($computer.Name)""..."
-        Restart-Computer -ComputerName $computer.IPv4Address -Force
-        continue rewrite
-      } default {
-        Write-Host ''
-        Write-Error 'Undefined action.'
-        continue rewrite
       }
+      Get-Computer $computer.Name
+    } 'Ping (until online)' {
+      Write-Host ''
+      Write-Host 'Press <control>+<C> to escape.' -ForegroundColor 'Cyan'
+      $passes = 0
+      while ($passes -lt 2) {
+        $connected = Test-Connection `
+            -ComputerName $computer.IPv4Address `
+            -Count 2 `
+            -Delay 3 `
+            -Quiet
+        $time = (Get-Date).ToString('HH:mm:ss')
+        if ($connected) {
+          $passes += 1
+          Write-Host "[$time] Response received (online)." `
+              -ForegroundColor 'Green'
+        } else {
+          Write-Host "[$time] No response received (offline)." `
+              -ForegroundColor 'Red'
+        }
+      }
+      Get-Computer $computer.Name
+    } 'Power off' {
+      Write-Host ''
+      Write-Host "Powering off ""$($computer.Name)""..."
+      Stop-Computer -ComputerName $computer.IPv4Address -Force
+    } 'Reload' {
+      Get-Computer $computer.Name
+    } 'Remote' {
+      Set-Clipboard -Value $($computer.Name)
+      Write-Host ''
+      Write-Host 'Copied...'
+      Write-Host $($computer.Name) -ForegroundColor 'Green'
+      Write-Host ''
+      Write-Host "Connecting to ""$($computer.Name)""..."
+      & 'msra.exe' '/offerra' $computer.IPv4Address
+      Write-Host ''
+    } 'Restart' {
+      Write-Host ''
+      Write-Host "Restarting ""$($computer.Name)""..."
+      Restart-Computer -ComputerName $computer.IPv4Address -Force
+      Write-Host ''
+    } default {
+      Write-Host ''
+      throw 'Undefined action.'
     }
   }
 }
